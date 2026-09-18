@@ -1,5 +1,21 @@
 # Release verification
 
+## Current standalone readiness audit — 2026-09-18
+
+Reverified the standalone distribution separately from ATOM: 55 tests passed
+with 91.98% coverage on Python 3.13.1. Locked environment sync, lint/format,
+isolated wheel/sdist builds, and the synthetic engineering lifecycle passed.
+A fresh installed wheel created, executed, reopened and verified a session in
+separate CLI processes. The agent demo exercised five specialist calls through
+real NOOA with scripted replies and zero provider calls. The guide's Python
+composition example was also checked using scripted NOOA responses.
+
+[Agent usage](AGENTS.md) documents composition and tool integration;
+[readiness](READINESS.md) distinguishes standalone/ATOM dependencies and remaining
+production prerequisites. Hosted checks appear on the
+[Actions page](https://github.com/nasa-nccs-hpda/nexus-geos-agent/actions).
+Historical verification records below predate this publication audit.
+
 ## 0.2.0 — durable sessions
 
 Adds SQLite-backed session state and dependency graphs, structured findings and
@@ -60,8 +76,8 @@ placement, digest conflicts, patch rollback, command deadlines/output caps,
 units/shapes/NaNs, and comparable benchmark environments.
 
 The CI workflow runs the locked suite on Linux with Python 3.12 and 3.13 and
-builds/installs a wheel. Its hosted execution is pending a push; local checks are
-not described as a completed GitHub Actions run.
+builds/installs a wheel. At the time of that initial local record, hosted execution was pending a push;
+those local checks were not a completed GitHub Actions run.
 
 ### Explicitly unverified or deferred
 
@@ -85,7 +101,7 @@ capabilities already exist.
 - `v0.1.0`: locked, documented, tested initial release.
 - `v0.2.0`: durable sessions, task graph, scoped memory, resume and recovery.
 
-Tags are annotated and local. No branch/tag push, GitHub Release or package-index
-publication is performed automatically. Candidate GEOS task changes are also
+The milestone tags were created locally during development. No GitHub Release
+or package-index publication is performed automatically. Candidate GEOS task changes are also
 left uncommitted for review; the framework's development commits are separate
 from any future scientific source changes it proposes.

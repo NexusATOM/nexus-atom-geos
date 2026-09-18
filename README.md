@@ -12,6 +12,22 @@ and the real GEOS federation: `GEOSgcm`, `GEOSgcm_GridComp`,
 science components. `GEOSfvdycore` remains an alias for the actual dynamical-core
 repository. The catalog guides routing; local source evidence supports findings.
 
+## Relationship to NexusATOM
+
+This is the standalone GEOS agent: its NOOA specialists, engineering tools, and
+SQLite sessions can run without the NexusATOM Controller or other ATOM packages.
+The separate [NexusATOM GEOS plugin](https://github.com/NexusATOM/nexus-atom-geos)
+connects GEOS capabilities to the broader goal/experiment controller and shared
+HPC/science interfaces. See [the architecture and readiness guide](docs/READINESS.md)
+for these boundaries, the runnable example, and production prerequisites.
+
+Use separate virtual environments for this package and `nexus-atom-geos`:
+both currently provide the `geos_agents` import and `geos-agent` executable.
+Installing both in one environment can overwrite the same files.
+
+See [how to use and orchestrate the agents](docs/AGENTS.md) for all six roles,
+CLI/Python examples, tool integration, and saved sessions.
+
 ## Quick start
 
 Requires Python 3.12 or 3.13, Git, and Linux or macOS for command execution.

@@ -4,11 +4,13 @@ Use Python 3.12 or 3.13 and the committed dependency lock:
 
 ```bash
 uv sync --locked --extra dev
-uv run ruff check src tests examples/run_engineering_demo.py
-uv run ruff format --check src tests examples/run_engineering_demo.py
+uv run ruff check src tests examples/*.py
+uv run ruff format --check src tests examples/*.py
 uv run pytest --cov=geos_agents --cov-report=term-missing --cov-fail-under=80
 uv run python examples/run_engineering_demo.py
 uv build
+# In a fresh environment containing the built wheel:
+# /path/to/environment/bin/python examples/check_installed_package.py
 ```
 
 The test suite uses real NOOA PredictStrategy dispatch with FakeLLMClient, local

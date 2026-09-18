@@ -1,5 +1,7 @@
 # Python API
 
+Start with [how to use the agents](AGENTS.md) for the role catalog and orchestration examples.
+
 The top-level package is `geos_agents`; the distribution is `nexus-geos-agent`.
 NOOA is required at installation, but offline tools do not import its runtime.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Add a practical six-agent usage guide and a runnable scripted NOOA orchestration demo.
+
+- Document standalone/ATOM package boundaries and separate-environment installation.
+- Verify installed-wheel session creation, execution, resume and artifact integrity in CI.
+
 ## 0.2.0 — 2026-09-18
 
 - Add SQLite-backed GEOSSession state: objectives, task dependencies, decisions,
