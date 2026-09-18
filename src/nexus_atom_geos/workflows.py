@@ -16,6 +16,7 @@ def modernization_plan(
         ("build", "candidate"),
         ("run", "candidate"),
         ("benchmark", "candidate"),
+        ("profile", "candidate"),
         ("validate", "candidate"),
         ("diagnose", "candidate"),
     ]

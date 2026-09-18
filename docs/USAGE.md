@@ -77,3 +77,11 @@ workflow. The process checks that profiling evidence is present, proposes an
 invalid Python candidate, receives its compiler error on the next attempt, and
 proposes a valid repair that passes the registered checks. This tests evidence
 flow and revision, not live LLM reasoning or actual GEOS optimization.
+
+The modernization plan profiles the candidate after benchmarking it as well as
+profiling the baseline. Later proposal attempts receive that candidate profile
+through prior task results. Use `phase_commands.candidate.profile` for a distinct
+candidate profiler, otherwise the common profile command is used; configurations
+with only `phase_commands.baseline.profile` reuse it for the candidate. A failed
+profiler fails the experiment rather than certifying an incompletely measured
+candidate. Each attempt still starts from the original isolated baseline.

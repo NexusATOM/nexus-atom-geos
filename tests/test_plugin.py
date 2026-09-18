@@ -10,6 +10,11 @@ from nexus_atom_geos.plugin import GEOSPlugin
 @pytest.mark.asyncio
 async def test_complete_synthetic_modernization(tmp_path):
     plugin = GEOSPlugin.demo(tmp_path / "demo")
+    commands = dict(plugin.config.commands)
+    profile = commands.pop("profile")
+    plugin.config = plugin.config.model_copy(
+        update={"commands": commands, "phase_commands": {"baseline": {"profile": profile}}}
+    )
     registry = CapabilityRegistry()
     registry.register(plugin)
     store = Store(tmp_path / "state")
@@ -26,7 +31,8 @@ async def test_complete_synthetic_modernization(tmp_path):
     assert result["status"] == "succeeded", [
         (e.status, [r.error for r in e.results], e.evaluations) for e in history
     ]
-    assert len(history[0].results) == 11
+    assert len(history[0].results) == 12
+    assert (store.directory(history[0].id) / "evidence/candidate-profile.json").is_file()
     assert "for i in range" in (tmp_path / "demo/baseline/kernel.py").read_text()
     assert len(history[0].artifacts) > 10
     store.close()

@@ -11,3 +11,5 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   logs remain in experiment artifacts.
 - Verify a synthetic proposal/build-failure/repair cycle through a real local
   subprocess runtime and the shared controller.
+- Profile the candidate after benchmarking, preserving its measured behavior for
+  subsequent hypothesis revision; support baseline-only profiler configurations.

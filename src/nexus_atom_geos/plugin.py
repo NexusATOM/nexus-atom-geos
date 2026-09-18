@@ -166,6 +166,8 @@ class GEOSPlugin(ModelPlugin):
     async def _command(self, operation, phase, context, registry):
         config = self.config
         argv = config.phase_commands.get(phase, {}).get(operation, config.commands.get(operation))
+        if not argv and operation == "profile" and phase == "candidate":
+            argv = config.phase_commands.get("baseline", {}).get("profile")
         if not argv:
             raise ValueError(f"Configure an explicit {operation} command")
         root = registry.get(config.repository).path
