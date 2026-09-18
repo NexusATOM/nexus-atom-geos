@@ -3,3 +3,11 @@
 ## 0.1.0
 
 Initial multi-repository Nexus ATOM implementation. See README for implemented contracts, verification and production integration boundaries.
+
+## Unreleased
+
+- Feed baseline profiler output and previous task failure details into local/NOOA
+  optimization proposals. Command results retain bounded log excerpts while full
+  logs remain in experiment artifacts.
+- Verify a synthetic proposal/build-failure/repair cycle through a real local
+  subprocess runtime and the shared controller.

@@ -52,3 +52,28 @@ A wrong candidate is never promoted merely for being fast. Passing configured di
 `geos-agent` remains available. Its repository inspection, typed NOOA agents, engineering gates and durable session interface are documented under [legacy usage](legacy/USAGE.md), [legacy sessions](legacy/SESSIONS.md), [legacy API](legacy/API.md) and [legacy architecture](legacy/ARCHITECTURE.md). These are retained interfaces, separate from the new `atom` controller.
 
 See [API](API.md), [Discover](DISCOVER.md), [example site files](../examples/discover), and [tests](../tests/test_plugin.py).
+
+## Profiling and failure feedback for proposals
+
+Local/NOOA optimization requests include `baseline_profile` alongside baseline
+benchmark samples and selected source files. Build, run and profile command
+results record bounded stdout/stderr excerpts: the first and last 4 KiB per
+stream, with availability, total byte count and a truncation flag. Complete job
+logs remain in the experiment artifacts. Configure the profile command to print
+useful hotspots or a concise summary to stdout (for example, sort a cProfile
+report by cumulative time). A profiler that only writes a separate binary report
+must also export a text summary for this proposal context.
+
+On another attempt, the GEOS planner supplies the previous terminal task results
+as `previous_task_results`, in addition to evaluator decisions. This preserves
+compiler/runtime error excerpts even when a failed task prevents the downstream
+validation graph from running. A runtime can use those errors to propose a repair
+from a fresh isolated baseline. It is still responsible for interpreting the
+profile and choosing a hypothesis; ATOM does not implement a universal profiler
+parser or guarantee that the agent can fix a failure.
+
+A regression test uses an actual local JSON proposal process and synthetic GEOS
+workflow. The process checks that profiling evidence is present, proposes an
+invalid Python candidate, receives its compiler error on the next attempt, and
+proposes a valid repair that passes the registered checks. This tests evidence
+flow and revision, not live LLM reasoning or actual GEOS optimization.

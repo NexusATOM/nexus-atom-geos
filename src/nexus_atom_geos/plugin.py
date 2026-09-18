@@ -37,6 +37,30 @@ def write_json(path: Path, value):
         json.dump(value, stream, indent=2, allow_nan=False)
 
 
+def log_excerpt(path: Path, limit: int = 8192) -> dict:
+    """Bound prompt material while retaining both initial context and final errors."""
+    if limit < 2:
+        raise ValueError("Log excerpt limit must be at least two bytes")
+    if not path.exists():
+        return {"text": "", "available": False, "truncated": False}
+    with path.open("rb") as stream:
+        size = stream.seek(0, 2)
+        stream.seek(0)
+        if size <= limit:
+            content = stream.read(limit)
+        else:
+            head = stream.read(limit // 2)
+            tail_size = limit - len(head)
+            stream.seek(-tail_size, 2)
+            content = head + b"\n[... log excerpt truncated ...]\n" + stream.read(tail_size)
+    return {
+        "text": content.decode(errors="replace"),
+        "available": True,
+        "truncated": size > limit,
+        "bytes": size,
+    }
+
+
 class GEOSCapability(Capability):
     def __init__(self, plugin, operation):
         self.plugin, self.operation = plugin, operation
@@ -162,6 +186,8 @@ class GEOSPlugin(ModelPlugin):
             "elapsed_seconds": result.elapsed_seconds,
             "gpu_seconds": result.gpu_seconds,
             "returncode": result.returncode,
+            "stdout": log_excerpt(job.stdout_path),
+            "stderr": log_excerpt(job.stderr_path),
         }
 
     async def execute(self, operation, task, context):
@@ -290,6 +316,12 @@ class GEOSPlugin(ModelPlugin):
                             evidence={
                                 "files": files,
                                 "previous_evaluations": task.parameters.get("feedback", []),
+                                "previous_task_results": task.parameters.get(
+                                    "previous_task_results", []
+                                ),
+                                "baseline_profile": json.loads(
+                                    (evidence / "baseline-profile.json").read_text()
+                                ),
                                 "baseline_benchmark": json.loads(
                                     (evidence / "baseline-benchmark.json").read_text()
                                 ),
@@ -381,6 +413,11 @@ class GEOSPlugin(ModelPlugin):
                     "parameters": {
                         **task.parameters,
                         "feedback": [e.model_dump(mode="json") for e in history[-1].evaluations]
+                        if history
+                        else [],
+                        "previous_task_results": [
+                            r.model_dump(mode="json") for r in history[-1].results
+                        ]
                         if history
                         else [],
                     }
