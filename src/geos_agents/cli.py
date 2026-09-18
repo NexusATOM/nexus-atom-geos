@@ -23,6 +23,9 @@ def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="geos-agent", description=__doc__)
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    from geos_agents.session_cli import register
+
+    register(commands)
     commands.add_parser("catalog", help="show curated GEOS repository responsibilities")
     init = commands.add_parser("init", help="import existing GEOSgcm mepo components")
     init.add_argument("--mepo", type=Path, required=True, help="GEOSgcm fixture directory")
@@ -147,8 +150,13 @@ async def _workflow(args) -> tuple[object, WorkflowRunner]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parser().parse_args(argv)
+    arguments = sys.argv[1:] if argv is None else argv
+    args = parser().parse_args(arguments or ["resume"])
     try:
+        if args.command in {"session", "resume"}:
+            from geos_agents.session_cli import handle
+
+            return handle(args)
         if args.command == "catalog":
             print(json.dumps([s.model_dump(mode="json") for s in CATALOG], indent=2))
         elif args.command == "init":

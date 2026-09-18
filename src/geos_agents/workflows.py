@@ -78,6 +78,7 @@ class WorkflowRunner:
         call_timeout: float = 120,
         targets: tuple[tuple[str, str], ...] = (),
         measurements: tuple[TimingEvidence, ...] = (),
+        session_context: str = "",
     ):
         if not 0 < call_timeout <= 3600:
             raise ValueError("call_timeout must be in (0, 3600]")
@@ -87,6 +88,9 @@ class WorkflowRunner:
         self.call_timeout = call_timeout
         self.targets = targets
         self.measurements = measurements
+        if len(session_context) > 16000:
+            raise ValueError("session_context exceeds 16000 characters")
+        self.session_context = session_context
         self.last_trace: RunTrace | None = None
 
     async def execute(self, task: GEOSTask, *, llm: UnifiedLLM | None = None) -> GEOSResult:
@@ -166,6 +170,7 @@ class WorkflowRunner:
                         RepositoryAgent(llm=llm).investigate,
                         task,
                         context,
+                        self.session_context,
                         citation_contexts=(context,),
                     )
                 measurement_ids = tuple(m.id for m in self.measurements)
@@ -210,6 +215,7 @@ class WorkflowRunner:
                         files,
                         json.dumps(
                             {
+                                "session_context": self.session_context,
                                 "assessments": {
                                     name: {
                                         "summary": a.summary[:2000],

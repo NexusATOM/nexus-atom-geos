@@ -27,12 +27,17 @@ class RepositoryAgent(Agent):
     """
 
     @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
-    async def investigate(self, task: GEOSTask, context: RepositoryContext) -> Assessment:
+    async def investigate(
+        self, task: GEOSTask, context: RepositoryContext, session_context: str = ""
+    ) -> Assessment:
         """Analyze the task within this repository's supplied source context.
 
         Identify ownership, relevant Fortran/CMake interfaces and missing context.
         Every finding must cite evidence IDs from context. Source excerpts may be
         partial; do not invent routines, call graphs, units or numerical results.
+        Session context contains historical findings and operator decisions, not
+        another agent's conversation. Reverify historical claims against current
+        evidence; only current context IDs may support new findings.
         """
         ...
 

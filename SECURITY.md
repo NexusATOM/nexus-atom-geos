@@ -31,5 +31,14 @@ directory and `workspace.local.yaml` are Git-ignored by default. Keep artifacts
 private according to the source/data they contain; no telemetry upload is added
 by this project. NOOA's own optional tracing configuration remains independent.
 
+Sessions persist configuration, explicit execution authorization, findings and
+artifact references in a local SQLite database. Starting queued tasks can invoke
+the model and commands previously configured for those tasks. `resume` itself
+does not execute queued work. A recovered interrupted task requires an explicit
+retry; this prevents blindly repeating uncertain side effects. Worker locks are
+local POSIX file locks, not distributed scheduler leases. Use a local disk or a
+filesystem whose SQLite/locking semantics your site supports. Promoted memory is
+historical evidence, not a new source of execution authority.
+
 Report suspected vulnerabilities privately to the repository maintainers via
 their approved channel. Do not publish credentials or sensitive source in an issue.

@@ -1,5 +1,7 @@
 # Usage
 
+For durable task graphs, shared findings and interactive resume, see [sessions](SESSIONS.md).
+
 ## Install and smoke test
 
 Use Python 3.12 or 3.13:

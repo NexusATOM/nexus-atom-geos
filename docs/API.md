@@ -73,6 +73,32 @@ through explicit wrapper commands rather than giving an LLM arbitrary shell acce
 
 `ContextLoader.read_file()` returns complete bounded text plus SHA-256;
 `load()` returns lexical excerpts with Git and line provenance. These are not
-compiler-derived Fortran symbol/call graphs. Persistent expert memory, semantic
-Fortran/CUDA analysis, native NetCDF comparison, and production scheduler adapters
+compiler-derived Fortran symbol/call graphs. Semantic Fortran/CUDA analysis,
+native NetCDF comparison, and production scheduler adapters
 remain explicit future work.
+
+## Persist and resume a session
+
+```python
+from geos_agents.sessions import GEOSSession, SessionRequest, SessionStore
+
+with SessionStore(Path(".geos-agent/sessions.sqlite3")) as store:
+    session_id = store.create("Understand MAPL field ownership", registry)
+    first = store.add(session_id, SessionRequest(task=GEOSTask(
+        description="Inspect MAPL fields", repositories=("MAPL",))))
+    store.add(session_id, SessionRequest(task=GEOSTask(
+        description="Explain the field interface", repositories=("MAPL",))),
+        depends_on=(first,), parent=first)
+    state = asyncio.run(GEOSSession(store, session_id).run_pending(max_tasks=1))
+
+# Reopening uses SQLite state rather than reconstructing chat history.
+with SessionStore(Path(".geos-agent/sessions.sqlite3")) as store:
+    state = asyncio.run(GEOSSession(store, session_id).run_pending())
+```
+
+Set `SessionRequest.model` for live NOOA reasoning. An engineering request has
+`kind="work"`, a validated `EngineeringPolicy`, and optional explicit execution
+authorization. Policies/proposals are saved as typed values, not mutable references
+to external config files. Workspace command definitions are snapshotted when a
+session is created. Tests may supply `run_pending(llm_factory=...)` for scripted
+NOOA clients without network or credentials.

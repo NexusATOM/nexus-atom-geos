@@ -39,6 +39,7 @@ as an evidence-driven Python library and CLI. NVIDIA's package is named **NOOA**
 | `v0.1.0a2` | NOOA delegation, task workflows, CLI, reproducible offline example |
 | `v0.1.0a3` | Isolated end-to-end work, command/patch lifecycle, numerical and benchmark gates |
 | `v0.1.0` | Reproducible installation, runnable demos, CI, documentation, release checks |
+| `v0.2.0` | Durable sessions, task graph, shared findings, resume and scoped memory |
 
 The first release supports investigation, explanation, GPU-port planning,
 reviewable implementation proposals, and an opt-in end-to-end engineering workflow
@@ -74,3 +75,23 @@ the install/test contract is the published `nooa==0.0.10` distribution.
 
 Catalog relationships are curated architecture hints, not a compiler-derived
 dependency graph. Paths, tags, branches, and routines must be verified locally.
+
+## Durable session state
+
+`GEOSSession` coordinates a SQLite-backed blackboard through `SessionStore`.
+Typed `SessionRequest` and `TaskNode` objects form a dependency graph; references
+can only target existing nodes in the same session, so the public API cannot
+introduce cycles. Each task has a persisted attempt directory before execution
+begins. SQLite is authoritative; `state.json` is an atomically replaced inspection
+snapshot. Large evidence stays in files with recorded hashes. Source changes stay
+in Git worktrees. Agent-private conversations are not session state.
+
+One OS file lock serializes workers per session. Completed tasks are not replayed.
+An abandoned worker becomes `interrupted`; an operator must explicitly retry,
+starting a fresh run while preserving earlier artifacts. This is task-boundary
+resumption, not transparent continuation of an arbitrary shell process or Slurm
+job. Domain validation remains the responsibility of deterministic gates.
+
+Historical findings and explicitly promoted repository-scoped memory can inform
+later agents, but must be reverified against current source. Completed historical
+checks are never substituted for the new work pipeline's validation ladder.

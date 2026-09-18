@@ -1,6 +1,34 @@
-# Release 0.1.0
+# Release verification
 
-## Delivered
+## 0.2.0 — durable sessions
+
+Adds SQLite-backed session state and dependency graphs, structured findings and
+decisions, scoped memory promotion, artifact integrity verification, interactive
+resume, worker exclusion and explicit task-boundary recovery. The original
+engineering workflow is retained and can execute as a durable session task.
+
+Verified locally on macOS arm64 on 2026-09-18:
+
+| Check | Result |
+| --- | --- |
+| Python 3.13.1 test suite | 55 tests passed |
+| Python 3.12.14 test suite | 55 tests passed |
+| Coverage | 91.98% |
+| Session-specific coverage | 10 tests: reopen, dependencies, retry, locks, changed source/artifacts, memory, NOOA context, engineering and terminal UI |
+| Ruff lint/format and lock consistency | Passed |
+| Wheel and source distribution | Built as 0.2.0 |
+| Installed-wheel session smoke test | Created, executed and resumed in separate processes; artifact hashes verified |
+
+Resume is explicitly at task boundaries. It does not claim to continue an
+arbitrarily interrupted compiler, model call or remote scheduler process. An
+interrupted task is retained and requires an explicit retry. No live GEOS/HPC or
+paid model-provider validation was added by this release.
+
+The `v0.1.0` tag is preserved. The durable-session release is tagged `v0.2.0`.
+
+## 0.1.0 — engineering foundation
+
+### Delivered
 
 - A Python package and `geos-agent` CLI using NVIDIA NOOA 0.0.10.
 - Curated GEOS expertise plus complete local mepo component binding.
@@ -11,7 +39,7 @@
 - Standalone inspection, patch, execution, numerical and benchmark tools.
 - Tests, examples, CI, locked dependencies, API/site documentation and Apache-2.0 license.
 
-## Verification record
+### Verification record
 
 Verified locally on macOS arm64 on 2026-09-18:
 
@@ -35,7 +63,7 @@ The CI workflow runs the locked suite on Linux with Python 3.12 and 3.13 and
 builds/installs a wheel. Its hosted execution is pending a push; local checks are
 not described as a completed GitHub Actions run.
 
-## Explicitly unverified or deferred
+### Explicitly unverified or deferred
 
 No live paid provider call, production GEOS build, Discover/Slurm job, GPU kernel
 port, or GEOS scientific validation was run during this release. NOOA's real
@@ -49,12 +77,13 @@ modernization are future extensions. Existing command wrappers and explicit
 repository bindings are the integration points; the code does not claim those
 capabilities already exist.
 
-## Repository milestones
+### Repository milestones
 
 - `v0.1.0a1`: registry, mepo import, typed source evidence.
 - `v0.1.0a2`: NOOA workflows, CLI, offline source example.
 - `v0.1.0a3`: isolated engineering lifecycle and deterministic gates.
 - `v0.1.0`: locked, documented, tested initial release.
+- `v0.2.0`: durable sessions, task graph, scoped memory, resume and recovery.
 
 Tags are annotated and local. No branch/tag push, GitHub Release or package-index
 publication is performed automatically. Candidate GEOS task changes are also

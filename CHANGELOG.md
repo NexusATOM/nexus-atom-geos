@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 — 2026-09-18
+
+- Add SQLite-backed GEOSSession state: objectives, task dependencies, decisions,
+  findings, repository snapshots, artifact hashes and attempt history.
+- Add session creation, queuing, execution, retry, recovery, integrity verification,
+  scoped memory promotion and an interactive `resume` interface.
+- Pass bounded historical findings to specialists without sharing private chat histories.
+- Enforce one worker per session, detect changed Git checkouts before execution,
+  retain interrupted attempts and require explicit retries at task boundaries.
+- Test reopening databases, dependency failure, worker exclusion, artifact tampering,
+  historical-context injection into real NOOA and persistent engineering candidates.
+
 ## 0.1.0 — 2026-09-18
 
 - Import all mepo components and permit explicit bindings beyond the curated catalog.

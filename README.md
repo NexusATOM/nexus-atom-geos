@@ -57,6 +57,24 @@ into success by an agent. The framework does not merge candidate branches or
 certify scientific validity. Production GEOS execution needs a configured site
 environment; it has not been demonstrated by the synthetic tests.
 
+## Durable sessions
+
+```bash
+uv run geos-agent session create --workspace examples/demo/workspace.yaml \
+  --objective 'Investigate GEOS dynamics and preserve scientific behavior'
+# Substitute the returned ID below.
+uv run geos-agent session add SESSION_ID 'Inspect pressure_log' --repo fvdycore
+uv run geos-agent session run SESSION_ID
+uv run geos-agent resume SESSION_ID
+```
+
+SQLite stores task dependencies, decisions, findings and artifact references.
+Resuming preserves completed work; interrupted tasks require an explicit retry
+and retain their previous artifacts. `resume` opens a small terminal interface
+with `/status`, `/history`, `/agents`, `/findings`, `/run` and `/decision`.
+No-argument `geos-agent` resumes the latest saved session. See [sessions](docs/SESSIONS.md)
+for model-driven tasks, shared findings, memory and recovery semantics.
+
 ## Capabilities
 
 | Area | Implemented |
@@ -67,6 +85,7 @@ environment; it has not been demonstrated by the synthetic tests.
 | Validation | Finite JSON fields, units/shapes, explicit tolerances, binary64 bitwise comparison, optional unweighted sum checks |
 | Performance | Warmups, repeated wall-time trials, environment matching and optional minimum speedup |
 | Audit | Persistent JSONL events, source evidence, patch diffs/backups, JSON and Markdown reports |
+| Sessions | SQLite task graph, resume/retry, artifact verification, decisions and scoped expert memory |
 | Lifecycle | Unit/integration tests, locked dependencies, wheel/sdist packaging, CI and annotated milestone tags |
 
 Read [usage](docs/USAGE.md), [site integration](docs/SITE-INTEGRATION.md),

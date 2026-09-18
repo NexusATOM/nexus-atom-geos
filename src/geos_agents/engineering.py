@@ -60,9 +60,12 @@ class EngineeringPolicy(Contract):
 
 
 class EngineeringRunner:
-    def __init__(self, registry: RepositoryRegistry, output_root: Path):
+    def __init__(
+        self, registry: RepositoryRegistry, output_root: Path, *, session_context: str = ""
+    ):
         self.registry = registry
         self.output_root = output_root
+        self.session_context = session_context
         self.last_trace: RunTrace | None = None
 
     async def work(
@@ -137,6 +140,7 @@ class EngineeringRunner:
                 workspace.repositories,
                 trace.directory / "reasoning",
                 targets=targets,
+                session_context=self.session_context,
                 measurements=tuple(
                     TimingEvidence(
                         id=f"measurement:baseline:{index}",
