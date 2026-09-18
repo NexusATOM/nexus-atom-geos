@@ -13,7 +13,7 @@ This runs a real local engineering lifecycle on a **synthetic Python kernel**, n
 
 The plugin supports prepared file proposals and configured local/NOOA agents with explicit source targets. It imports mepo layouts through the preserved repository registry and rejects dirty baselines, stale source hashes, path escapes and changes outside selected agent targets. Commands run in detached worktrees. Baseline/candidate commands and Slurm resources can differ, while experiment identity and data must remain comparable. Slurm benchmarks require fresh application timing files; queue time is never treated as compute speedup.
 
-`geos_agents` is retained for compatibility, including the `geos-agent` CLI, typed NOOA specialists, source search, sessions and the earlier engineering workflow. Those tools were carried forward from [nasa-nccs-hpda/nexus-geos-agent](https://github.com/nasa-nccs-hpda/nexus-geos-agent), commit `1277ec0`, under Apache-2.0. The original repository is unchanged. Legacy docs and examples live under `docs/legacy` and `examples/legacy`; their original relative paths may need that prefix. Install `[nooa]` for live NOOA reasoning and the legacy runtime tests.
+`geos_agents` is retained for compatibility, including the `geos-agent` CLI, typed NOOA specialists, source search, sessions and the earlier engineering workflow. Those tools were carried forward from [nasa-nccs-hpda/nexus-geos-agent](https://github.com/nasa-nccs-hpda/nexus-geos-agent), commit `1277ec0`, under Apache-2.0. The copy in this package retains that revision; standalone documentation and release readiness evolve in the original repository. Legacy docs and examples live under `docs/legacy` and `examples/legacy`; their original relative paths may need that prefix. Install `[nooa]` for live NOOA reasoning and the legacy runtime tests.
 
 ECCO, LIS, ISSM and ModelE entry points are included as small **synthetic plugin contract examples** in `nexus_atom_geos.examples`. Run them with `atom run --system ecco --demo ...` (substitute the model name). They exercise the shared controller/evaluator/artifact protocol and do not claim upstream model execution. Separate production model repositories are deliberately deferred as specified in the plan.
 
@@ -35,6 +35,8 @@ Run package tests with `python -m pytest tests` after installing the `dev` extra
 Apache-2.0. This is an independent implementation for model orchestration, not an official NASA model distribution or endorsement.
 
 ## Documentation
+
+- [How to use the GEOS specialist agents](https://github.com/nasa-nccs-hpda/nexus-geos-agent/blob/main/docs/AGENTS.md) (standalone setup; use a separate environment from this package)
 
 - [Discover configuration](docs/DISCOVER.md)
 - [Usage and configuration](docs/USAGE.md)
