@@ -122,3 +122,12 @@ The default empty list preserves existing configurations and explicitly means
 that separate tests/sanitizers were not required. Site-policy artifacts record
 this selection. Production acceptance should declare the checks appropriate to
 the experiment; existing synthetic demos do not claim real sanitizer coverage.
+
+## Timing exports
+
+Each successful benchmark also writes `evidence/baseline-timings.csv` or
+`evidence/candidate-timings.csv`. Rows contain phase, measured trial number,
+seconds, and measurement scope. Warmups are excluded exactly as in the benchmark
+JSON. Both formats retain the same sample values and are sealed as artifacts.
+The controller's `_atom_report` files provide acceptance decisions and metrics;
+CSV exports alone do not imply that a candidate was accepted.

@@ -121,7 +121,7 @@ GEOS capabilities over preserved federation tooling, HPC and generic science.
 
 ### `write_json`
 
-[Source](../src/nexus_atom_geos/plugin.py#L34)
+[Source](../src/nexus_atom_geos/plugin.py#L35)
 
 ```python
 def write_json(path: Path, value): ...
@@ -129,7 +129,7 @@ def write_json(path: Path, value): ...
 
 ### `log_excerpt`
 
-[Source](../src/nexus_atom_geos/plugin.py#L40)
+[Source](../src/nexus_atom_geos/plugin.py#L41)
 
 Bound prompt material while retaining both initial context and final errors.
 
@@ -139,7 +139,7 @@ def log_excerpt(path: Path, limit: int=8192) -> dict: ...
 
 ### `GEOSCapability`
 
-[Source](../src/nexus_atom_geos/plugin.py#L64)
+[Source](../src/nexus_atom_geos/plugin.py#L65)
 
 ```python
 class GEOSCapability(Capability):
@@ -149,7 +149,7 @@ class GEOSCapability(Capability):
 
 ### `GEOSEvaluator`
 
-[Source](../src/nexus_atom_geos/plugin.py#L74)
+[Source](../src/nexus_atom_geos/plugin.py#L75)
 
 ```python
 class GEOSEvaluator(Evaluator):
@@ -159,7 +159,7 @@ class GEOSEvaluator(Evaluator):
 
 ### `GEOSPlugin`
 
-[Source](../src/nexus_atom_geos/plugin.py#L138)
+[Source](../src/nexus_atom_geos/plugin.py#L139)
 
 ```python
 class GEOSPlugin(ModelPlugin):

@@ -33,6 +33,16 @@ async def test_complete_synthetic_modernization(tmp_path):
     ]
     assert len(history[0].results) == 12
     assert (store.directory(history[0].id) / "evidence/candidate-profile.json").is_file()
+    import csv
+    import json
+
+    for phase in ("baseline", "candidate"):
+        evidence = store.directory(history[0].id) / "evidence"
+        with (evidence / f"{phase}-timings.csv").open() as stream:
+            rows = list(csv.DictReader(stream))
+        samples = json.loads((evidence / f"{phase}-benchmark.json").read_text())["samples"]
+        assert [float(row["seconds"]) for row in rows] == samples
+        assert all(row["phase"] == phase for row in rows)
     assert "for i in range" in (tmp_path / "demo/baseline/kernel.py").read_text()
     assert len(history[0].artifacts) > 10
     store.close()

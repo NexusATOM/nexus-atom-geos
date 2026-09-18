@@ -15,3 +15,4 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   subsequent hypothesis revision; support baseline-only profiler configurations.
 - Add configurable mandatory test and sanitizer stages for both phases, separate
   evaluator identities, and evidence requirements enforced by the software gate.
+- Export each phase's benchmark samples and timing scope to a sealed CSV artifact.

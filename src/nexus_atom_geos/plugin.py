@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
@@ -290,6 +291,13 @@ class GEOSPlugin(ModelPlugin):
                     else "local process elapsed time",
                 }
                 write_json(evidence / f"{phase}-benchmark.json", outputs)
+                timing_csv = evidence / f"{phase}-timings.csv"
+                with timing_csv.open("x", newline="") as stream:
+                    writer = csv.writer(stream)
+                    writer.writerow(("phase", "trial", "seconds", "measurement"))
+                    for trial, seconds in enumerate(samples, start=1):
+                        writer.writerow((phase, trial, seconds, outputs["measurement"]))
+                outputs["timing_csv"] = str(timing_csv.relative_to(directory))
                 usage = Usage(gpu_seconds=gpu_seconds)
             elif operation == "optimize":
                 proposal_path = task.parameters.get("proposal") or self.config.proposal
