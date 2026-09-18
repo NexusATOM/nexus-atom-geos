@@ -12,13 +12,21 @@ from nexus_atom_geos.plugin import GEOSPlugin
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("corrupt", [False, True])
-async def test_resume_continues_best_valid_candidate_and_preserves_baseline(tmp_path, corrupt):
+@pytest.mark.parametrize("corrupt,specialists", [(False, False), (True, False), (False, True)])
+async def test_resume_continues_best_valid_candidate_and_preserves_baseline(
+    tmp_path, corrupt, specialists
+):
     plugin = GEOSPlugin.demo(tmp_path / "fixture")
     original = (tmp_path / "fixture/baseline/kernel.py").read_bytes()
     runtime = tmp_path / "runtime.py"
     runtime.write_text("""import json,sys
 r=json.load(sys.stdin)['evidence']
+if 'profile' in r:
+    source=r['contexts'][0]['evidence'][0]
+    assert 'for i in range' in source['text'] or '# stage1' in source['text']
+    if '# stage1' in source['text']: assert any(k.startswith('parent:') for k in r['observations'])
+    print(json.dumps({'proposal':{'summary':'Review reconstructed source','findings':[{'summary':'Source reviewed','evidence_ids':[source['id']]}]},'rationale':'Scripted review'}))
+    sys.exit(0)
 f=r['files'][0]
 if r['continuation']['parent_experiment']:
     assert '# stage1' in f['content'], 'Rejected candidate must not seed subsequent work'
@@ -38,6 +46,9 @@ print(json.dumps({'proposal':{'summary':'Synthetic continuation','changes':[{
         runtime_argv=(sys.executable, str(runtime)),
         targets=(("MAPL", "kernel.py"),),
         continuation="best_valid",
+        specialists=({"name": "reviewer", "instructions": "Review reconstructed source"},)
+        if specialists
+        else (),
         warmups=0,
         benchmark_seconds_file="results/timing.json",
     )

@@ -6,6 +6,8 @@ from nexus_atom_hpc import Environment
 from nexus_atom_science import Tolerance, ValidationSuite
 from pydantic import Field, model_validator
 
+from geos_agents.models import GEOSTask, ObjectiveTag, SpecialistProfile
+
 
 class DebugPolicy(Contract):
     reference_dataset: Path
@@ -22,10 +24,26 @@ class DebugPolicy(Contract):
         return self
 
 
+class SpecialistRuntimeConfig(Contract):
+    runtime_argv: tuple[str, ...] | None = None
+    nooa_model: str | None = None
+    timeout_seconds: float = Field(default=120, gt=0, le=86400, allow_inf_nan=False)
+    max_output_tokens: int = Field(default=4096, gt=0, le=32768)
+
+    @model_validator(mode="after")
+    def one_runtime(self):
+        if bool(self.runtime_argv) == bool(self.nooa_model):
+            raise ValueError("Choose exactly one specialist runtime")
+        return self
+
+
 class GEOSConfig(Contract):
     workflow: Literal["modernization", "regression", "debug"] = "modernization"
     debug: DebugPolicy | None = None
     continuation: Literal["original", "best_valid"] = "original"
+    specialists: tuple[SpecialistProfile, ...] = Field(default=(), max_length=8)
+    objective_tags: tuple[ObjectiveTag, ...] = Field(default=(), max_length=8)
+    specialist_runtimes: dict[str, SpecialistRuntimeConfig] = Field(default_factory=dict)
     workspace: Path
     repository: str
     backend: Literal["local", "slurm"] = "local"
@@ -50,6 +68,22 @@ class GEOSConfig(Contract):
 
     @model_validator(mode="after")
     def configured(self):
+        GEOSTask(
+            description="Configured ATOM specialists",
+            specialists=self.specialists,
+            objective_tags=self.objective_tags,
+        )
+        if set(self.specialist_runtimes) - {p.name for p in self.specialists}:
+            raise ValueError("Specialist runtime refers to an unknown profile")
+        if self.specialists and (
+            self.workflow == "regression"
+            or self.proposal
+            or not self.targets
+            or bool(self.runtime_argv) == bool(self.nooa_model)
+        ):
+            raise ValueError(
+                "ATOM specialists require modernization/debug with explicit targets and one proposal runtime"
+            )
         if len(set(self.plot_fields)) != len(self.plot_fields) or any(
             not name for name in self.plot_fields
         ):

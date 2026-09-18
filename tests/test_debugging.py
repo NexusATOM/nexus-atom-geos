@@ -162,6 +162,10 @@ async def test_debug_runtime_receives_failure_and_replans_after_bad_repair(tmp_p
     runtime.write_text("""import hashlib,json,sys
 r=json.load(sys.stdin)
 e=r['evidence']
+if 'profile' in e:
+    assert 'experiment:diagnosis.json' in e['observations']
+    print(json.dumps({'proposal':{'summary':'Review reproduced failure'},'rationale':'Scripted review'}))
+    sys.exit(0)
 assert 'debug_diagnosis' in e and 'baseline_benchmark' not in e
 assert 'ATOM_EXPECTED_FAILURE' in e['debug_diagnosis']['failure']['stderr']['text']
 f=e['files'][0]
@@ -170,7 +174,10 @@ print(json.dumps({'proposal': {'summary':'Scripted repair','changes':[{'reposito
 """)
     data = plugin.config.model_dump()
     data.update(
-        proposal=None, runtime_argv=(sys.executable, str(runtime)), targets=(("MAPL", "kernel.py"),)
+        proposal=None,
+        runtime_argv=(sys.executable, str(runtime)),
+        targets=(("MAPL", "kernel.py"),),
+        specialists=({"name": "debug-reviewer", "instructions": "Review failure evidence"},),
     )
     plugin = GEOSPlugin(GEOSConfig.model_validate(data))
     registry = CapabilityRegistry()

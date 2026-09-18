@@ -120,6 +120,16 @@ class GEOSEvaluator(Evaluator):
                 for kind in kinds
             ]
             passed = all(r["status"] == "succeeded" for r in records)
+            if self.name == "software" and self.plugin.config.specialists:
+                by_id = {r.task_id: r for r in results}
+                passed = passed and all(
+                    (review := by_id.get(f"specialist-{profile.name}")) is not None
+                    and review.status == "succeeded"
+                    and review.outputs.get("profile") == profile.model_dump(mode="json")
+                    and isinstance(review.outputs.get("selected"), bool)
+                    and (not review.outputs["selected"] or "assessment" in review.outputs)
+                    for profile in self.plugin.config.specialists
+                )
             if debug and self.name == "software":
                 from .debugging import repair_verified
 
@@ -196,6 +206,8 @@ class GEOSPlugin(ModelPlugin):
                 "validate",
                 "optimize",
                 "repair",
+                "prepare_candidate",
+                "review_specialist",
                 "reproduce",
                 "diagnose",
             )
@@ -249,6 +261,29 @@ class GEOSPlugin(ModelPlugin):
             "stderr": log_excerpt(job.stderr_path),
         }
 
+    def _prepare_candidate(self, context, registry, evidence):
+        from .continuation import seed_candidate
+
+        seed = None
+        if self.config.continuation == "best_valid":
+            seed = seed_candidate(context, registry, evidence, self.config.targets)
+        lineage = {
+            "policy": self.config.continuation,
+            "parent_experiment": context.parent_experiment.id if seed else None,
+            "baseline": (
+                "trusted reference dataset"
+                if self.config.workflow == "debug"
+                else "original configured source, remeasured in this attempt"
+            ),
+        }
+        write_json(evidence / "continuation.json", lineage)
+        artifact = None
+        if seed:
+            path = evidence / "seed-proposal.json"
+            write_json(path, seed.model_dump(mode="json"))
+            artifact = Artifact.capture(path, context.directory).model_dump(mode="json")
+        return {"lineage": lineage, "seed_artifact": artifact}
+
     async def execute(self, operation, task, context):
         if self.config is None:
             raise ValueError("GEOS requires a site configuration; use --config or --demo")
@@ -261,6 +296,9 @@ class GEOSPlugin(ModelPlugin):
         outputs = {}
         usage = Usage()
         if operation == "inspect":
+            from .specialist_adapter import verify_saved_configuration
+
+            verify_saved_configuration(self.config, context)
             original = RepositoryRegistry.from_file(self.config.workspace)
             trace = RunTrace(directory / "workspace-traces", kind="isolation")
             workspace = GEOSWorkspace(original, trace).isolate(directory / "source")
@@ -280,7 +318,20 @@ class GEOSPlugin(ModelPlugin):
         else:
             registry = self._workspace(context)
             root = registry.get(self.config.repository).path
-            if operation == "reproduce":
+            if operation == "prepare_candidate":
+                if not self.config.specialists:
+                    raise ValueError("Candidate preparation tasks require configured specialists")
+                outputs = self._prepare_candidate(context, registry, evidence)
+            elif operation == "review_specialist":
+                from .specialist_adapter import require_preparation, review
+
+                require_preparation(context)
+                outputs, used = await review(self.config, registry, task, context)
+                if isinstance(outputs, TaskResult):
+                    return outputs
+                if used is not None:
+                    usage = used
+            elif operation == "reproduce":
                 if self.config.workflow != "debug":
                     raise ValueError("Reproduction requires workflow: debug")
                 from .debugging import contains_signature, protection, reproduction_matches
@@ -401,17 +452,26 @@ class GEOSPlugin(ModelPlugin):
             elif operation in {"optimize", "repair"}:
                 if operation == "repair" and self.config.workflow != "debug":
                     raise ValueError("Repair requires workflow: debug")
-                from .continuation import cumulative_proposal, seed_candidate
+                from .continuation import cumulative_proposal
+                from .specialist_adapter import assessments, require_preparation
 
+                prepared = (
+                    require_preparation(context)
+                    if self.config.specialists
+                    else self._prepare_candidate(context, registry, evidence)
+                )
                 seed = None
-                if self.config.continuation == "best_valid":
-                    seed = seed_candidate(context, registry, evidence, self.config.targets)
-                lineage = {
-                    "policy": self.config.continuation,
-                    "parent_experiment": context.parent_experiment.id if seed else None,
-                    "baseline": "original configured source, remeasured in this attempt",
-                }
-                write_json(evidence / "continuation.json", lineage)
+                if prepared["seed_artifact"]:
+                    artifact = Artifact.model_validate(prepared["seed_artifact"])
+                    if not artifact.verify(directory):
+                        raise ValueError("Prepared candidate artifact changed")
+                    seed = PatchProposal.model_validate_json(
+                        (directory / artifact.path).read_text()
+                    )
+                lineage = prepared["lineage"]
+                reviews = (
+                    assessments(self.config, context, registry) if self.config.specialists else {}
+                )
                 proposal_path = task.parameters.get("proposal") or self.config.proposal
                 if proposal_path:
                     proposal = PatchProposal.model_validate_json(Path(proposal_path).read_text())
@@ -458,6 +518,7 @@ class GEOSPlugin(ModelPlugin):
                             evidence={
                                 "files": files,
                                 "continuation": lineage,
+                                "specialist_assessments": reviews,
                                 "parent_candidate_results": [
                                     r.model_dump(mode="json")
                                     for r in context.parent_experiment.results
@@ -655,4 +716,9 @@ class GEOSPlugin(ModelPlugin):
             else task
             for task in plan.graph.tasks
         )
-        return plan.model_copy(update={"graph": plan.graph.model_copy(update={"tasks": tasks})})
+        plan = plan.model_copy(update={"graph": plan.graph.model_copy(update={"tasks": tasks})})
+        if self.config.specialists:
+            from .specialist_adapter import add_review_tasks
+
+            plan = add_review_tasks(plan, self.config)
+        return plan

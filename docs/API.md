@@ -6,7 +6,7 @@ Public definitions below are generated from the shipped source. See USAGE.md and
 
 ### `DebugPolicy`
 
-[Source](../src/nexus_atom_geos/config.py#L10)
+[Source](../src/nexus_atom_geos/config.py#L12)
 
 ```python
 class DebugPolicy(Contract):
@@ -19,15 +19,31 @@ class DebugPolicy(Contract):
     def signature_is_meaningful(self): ...
 ```
 
+### `SpecialistRuntimeConfig`
+
+[Source](../src/nexus_atom_geos/config.py#L27)
+
+```python
+class SpecialistRuntimeConfig(Contract):
+    runtime_argv: tuple[str, ...] | None = None
+    nooa_model: str | None = None
+    timeout_seconds: float = Field(default=120, gt=0, le=86400, allow_inf_nan=False)
+    max_output_tokens: int = Field(default=4096, gt=0, le=32768)
+    def one_runtime(self): ...
+```
+
 ### `GEOSConfig`
 
-[Source](../src/nexus_atom_geos/config.py#L25)
+[Source](../src/nexus_atom_geos/config.py#L40)
 
 ```python
 class GEOSConfig(Contract):
     workflow: Literal['modernization', 'regression', 'debug'] = 'modernization'
     debug: DebugPolicy | None = None
     continuation: Literal['original', 'best_valid'] = 'original'
+    specialists: tuple[SpecialistProfile, ...] = Field(default=(), max_length=8)
+    objective_tags: tuple[ObjectiveTag, ...] = Field(default=(), max_length=8)
+    specialist_runtimes: dict[str, SpecialistRuntimeConfig] = Field(default_factory=dict)
     workspace: Path
     repository: str
     backend: Literal['local', 'slurm'] = 'local'
@@ -268,7 +284,7 @@ class GEOSEvaluator(Evaluator):
 
 ### `GEOSPlugin`
 
-[Source](../src/nexus_atom_geos/plugin.py#L171)
+[Source](../src/nexus_atom_geos/plugin.py#L181)
 
 ```python
 class GEOSPlugin(ModelPlugin):
@@ -280,6 +296,68 @@ class GEOSPlugin(ModelPlugin):
     def demo(cls, directory): ...
     def goal_constraints(self): ...
     async def plan(self, goal, history, registry): ...
+```
+
+## `nexus_atom_geos.specialist_adapter`
+
+Optional advisory profiles as separately budgeted ATOM capability tasks.
+
+### `route`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L17)
+
+```python
+def route(config, name): ...
+```
+
+### `add_review_tasks`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L23)
+
+```python
+def add_review_tasks(plan, config): ...
+```
+
+### `contexts_for_targets`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L51)
+
+```python
+def contexts_for_targets(config, registry): ...
+```
+
+### `review`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L82)
+
+```python
+async def review(config, registry, task, context): ...
+```
+
+### `assessments`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L195)
+
+```python
+def assessments(config, context, registry): ...
+```
+
+### `require_preparation`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L216)
+
+```python
+def require_preparation(context): ...
+```
+
+### `verify_saved_configuration`
+
+[Source](../src/nexus_atom_geos/specialist_adapter.py#L223)
+
+Pin policy using the controller's verified, sealed experiment history.
+
+```python
+def verify_saved_configuration(config, context): ...
 ```
 
 ## `nexus_atom_geos.workflows`

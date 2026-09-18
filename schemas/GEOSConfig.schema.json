@@ -221,6 +221,109 @@
       "title": "ScientificDiagnostic",
       "type": "object"
     },
+    "SpecialistProfile": {
+      "additionalProperties": false,
+      "description": "Operator-configured advisory expertise; never an execution or acceptance policy.",
+      "properties": {
+        "name": {
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9_-]*$",
+          "title": "Name",
+          "type": "string"
+        },
+        "instructions": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Instructions",
+          "type": "string"
+        },
+        "repositories": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Repositories",
+          "type": "array"
+        },
+        "objective_tags": {
+          "default": [],
+          "items": {
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Objective Tags",
+          "type": "array"
+        },
+        "required_evidence": {
+          "default": [],
+          "items": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Required Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "instructions"
+      ],
+      "title": "SpecialistProfile",
+      "type": "object"
+    },
+    "SpecialistRuntimeConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "runtime_argv": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Argv"
+        },
+        "nooa_model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nooa Model"
+        },
+        "timeout_seconds": {
+          "default": 120,
+          "exclusiveMinimum": 0,
+          "maximum": 86400,
+          "title": "Timeout Seconds",
+          "type": "number"
+        },
+        "max_output_tokens": {
+          "default": 4096,
+          "exclusiveMinimum": 0,
+          "maximum": 32768,
+          "title": "Max Output Tokens",
+          "type": "integer"
+        }
+      },
+      "title": "SpecialistRuntimeConfig",
+      "type": "object"
+    },
     "Tolerance": {
       "additionalProperties": false,
       "properties": {
@@ -295,6 +398,33 @@
       ],
       "title": "Continuation",
       "type": "string"
+    },
+    "specialists": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SpecialistProfile"
+      },
+      "maxItems": 8,
+      "title": "Specialists",
+      "type": "array"
+    },
+    "objective_tags": {
+      "default": [],
+      "items": {
+        "maxLength": 64,
+        "pattern": "^[a-z][a-z0-9_-]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Objective Tags",
+      "type": "array"
+    },
+    "specialist_runtimes": {
+      "additionalProperties": {
+        "$ref": "#/$defs/SpecialistRuntimeConfig"
+      },
+      "title": "Specialist Runtimes",
+      "type": "object"
     },
     "workspace": {
       "format": "path",

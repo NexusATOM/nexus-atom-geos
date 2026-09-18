@@ -308,3 +308,12 @@ Continuation persists across goal resume. The automated synthetic case accepts
 one change, rejects the next, then successfully repairs from the earlier accepted
 candidate after a process/store restart. Its timing values are scripted test
 inputs and provide no performance evidence for GEOS.
+
+
+## Optional specialist review tasks
+
+Set inline `specialists`, explicit `objective_tags`, and optional per-profile
+`specialist_runtimes` in the GEOS config to review runtime-generated changes
+before applying them. See [ATOM specialist configuration](SPECIALISTS.md#use-optional-profiles-inside-atom)
+for routing, saved state, scope and accounting limits. Existing configurations
+without profiles retain their existing task graph.

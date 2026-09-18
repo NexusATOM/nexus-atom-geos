@@ -60,6 +60,11 @@ jobs:
         run: |
           python examples/debug_demo.py /tmp/atom-debug-example
           atom run --system geos --config /tmp/atom-debug-example/debug.yaml --state /tmp/atom-debug-example/state 'Repair the synthetic bug'
+      - name: Run ATOM specialist workflow
+        working-directory: nexus-atom-geos
+        run: |
+          python examples/atom_specialists_demo.py /tmp/atom-specialists-demo
+          atom run --system geos --config /tmp/atom-specialists-demo/specialists.yaml --state /tmp/atom-specialists-demo/state 'Review and optimize the synthetic kernel'
       - name: Build shared libraries for isolated wheel check
         run: |
           python -m build nexus-atom-core

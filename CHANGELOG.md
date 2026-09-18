@@ -49,3 +49,10 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   measuring the original source baseline on every attempt.
 - Preserve incremental/cumulative proposals and parent lineage; reject changed
   source commits, invalid evidence, and inherited edits outside configured targets.
+
+### ATOM specialist adapter
+
+- Optional repository/objective profiles now run as separate, budgeted review
+  tasks before runtime proposals, including with accepted-candidate continuation.
+- Added per-profile local/NOOA routing, recorded request/assessment evidence,
+  scoped citation checks, source-change detection and saved profile policy.
