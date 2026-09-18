@@ -1,5 +1,10 @@
 # Architecture and delivery plan
 
+> These supported GEOS Agent interfaces now live in `nexus-atom-geos`. Follow
+> [installation](../READINESS.md), activate that environment, and run commands
+> from the repository root. The `legacy` directory records their origin; it
+> does not require installing the old standalone distribution.
+
 Nexus GEOS Agent implements the design in [PRELIM-PLANNING.md](PRELIM-PLANNING.md)
 as an evidence-driven Python library and CLI. NVIDIA's package is named **NOOA**
 (`nooa`), not NOAA. Python 3.12–3.13 matches its supported runtime.

@@ -9,3 +9,7 @@ dist/
 *.egg-info/
 .atom/
 *.local.*
+
+# GEOS Agent evidence and isolated environments
+.geos-agent/
+.venv*/

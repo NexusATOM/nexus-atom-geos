@@ -47,9 +47,9 @@ Required evaluators are `geos.software`, `geos.numerical`, `geos.science` and `g
 
 A wrong candidate is never promoted merely for being fast. Passing configured diagnostics is not a universal GEOS science certificate. Promotion records a best-candidate pointer and retains source/worktrees; it does not merge upstream branches.
 
-## Legacy GEOS tooling
+## GEOS Agent tooling
 
-`geos-agent` remains available. Its repository inspection, typed NOOA agents, engineering gates and durable session interface are documented under [legacy usage](legacy/USAGE.md), [legacy sessions](legacy/SESSIONS.md), [legacy API](legacy/API.md) and [legacy architecture](legacy/ARCHITECTURE.md). These are retained interfaces, separate from the new `atom` controller.
+`geos-agent` is maintained here alongside the plugin. Start with [how to use the agents](AGENTS.md). Its repository inspection, typed NOOA agents, engineering gates and durable session interface are documented under [legacy usage](legacy/USAGE.md), [legacy sessions](legacy/SESSIONS.md), [legacy API](legacy/API.md) and [legacy architecture](legacy/ARCHITECTURE.md). These are retained interfaces, separate from the new `atom` controller.
 
 See [API](API.md), [Discover](DISCOVER.md), [example site files](../examples/discover), and [tests](../tests/test_plugin.py).
 

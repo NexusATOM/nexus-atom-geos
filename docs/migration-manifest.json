@@ -1,0 +1,320 @@
+{
+  "source_project": "nasa-nccs-hpda/nexus-geos-agent",
+  "source_revision": "8f1f7ecac79560950bda5b46513b9e5f41771dea",
+  "history": "All source blobs and commits are preserved in merged Git history. Original annotated tags use geos-agent/ prefix.",
+  "history_only_reason": "uv.lock describes the old standalone distribution; use the new package setup, not the historical lock, for the integrated dependency graph.",
+  "files": [
+    {
+      "source": ".github/workflows/ci.yml",
+      "source_sha256": "e8715c5c1a295df12d14f726ce7cbf3117d279109bd8d1098bb1db83df461eed",
+      "destination": ".github/workflows/ci.yml",
+      "status": "adapted"
+    },
+    {
+      "source": ".gitignore",
+      "source_sha256": "0250209c3aa9167ef2c9145dbabd6ba4953f2dc3d8952133cea0d5315f795d66",
+      "destination": ".gitignore",
+      "status": "adapted"
+    },
+    {
+      "source": "CHANGELOG.md",
+      "source_sha256": "89e93bcc513fa02e5bb619cc4067cb9d5a93cf12b2bcb4078638275d069adfb5",
+      "destination": "docs/legacy/CHANGELOG.md",
+      "status": "identical"
+    },
+    {
+      "source": "CONTRIBUTING.md",
+      "source_sha256": "bb05436f3acd8bdda311dc6ce92d92bca2f064330feb1e30a6304a1077f4b336",
+      "destination": "CONTRIBUTING.md",
+      "status": "adapted"
+    },
+    {
+      "source": "LICENSE",
+      "source_sha256": "c32497357a923204513487b2aaed10c92bc1f37706714b8e631e54bea930fc94",
+      "destination": "LICENSE",
+      "status": "identical"
+    },
+    {
+      "source": "README.md",
+      "source_sha256": "e10929cf217534d89351827f8825e37f103baa654162030078c168cebc0200ba",
+      "destination": "README.md",
+      "status": "adapted"
+    },
+    {
+      "source": "SECURITY.md",
+      "source_sha256": "b98a5c519b4e0e3d556dd7822770d36743bb0521b7f3e55b7910e8b52e707feb",
+      "destination": "docs/legacy/SECURITY.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/AGENTS.md",
+      "source_sha256": "d036a0c709b265df39866f10a00b6644100bcfb23291216f5ccc625b2f7e31dd",
+      "destination": "docs/AGENTS.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/API.md",
+      "source_sha256": "dfb3c434426aa5f67fba002a7795f8e57ce8d28e9621f253b54ab575d55a68a6",
+      "destination": "docs/legacy/API.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/ARCHITECTURE.md",
+      "source_sha256": "f9a0b421fafbf767705e1fd8b88789a29d5031cfff9801f4c2ad327bc99a2cef",
+      "destination": "docs/legacy/ARCHITECTURE.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/PRELIM-PLANNING.md",
+      "source_sha256": "b83a12984cbdc4d57e7915c1d88ee0ece286007b7bedd71a342f055aac48b4fe",
+      "destination": "docs/legacy/PRELIM-PLANNING.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/READINESS.md",
+      "source_sha256": "db1f05068049ebbe989a112051af1891fe6eed01c83e95d3059ab451fd17d150",
+      "destination": "docs/READINESS.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/RELEASE.md",
+      "source_sha256": "c707c855cb8002c17cdc569fbeb9b3e4b942c813b67e85ff07aab8b9a93e093f",
+      "destination": "docs/legacy/RELEASE.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/SESSIONS.md",
+      "source_sha256": "5db6a1b7d0e27f666f4190f1e281622b3c8243e11ea199977c1254dd7d374036",
+      "destination": "docs/legacy/SESSIONS.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/SITE-INTEGRATION.md",
+      "source_sha256": "532ffc89730de2111273034799a12e23fc06e93f8434c18935494e9841149d5f",
+      "destination": "docs/legacy/SITE-INTEGRATION.md",
+      "status": "adapted"
+    },
+    {
+      "source": "docs/USAGE.md",
+      "source_sha256": "2c00962558564c8c3c5157f2a5a548600c6de6bb487e7fa246bfa4bce984437e",
+      "destination": "docs/legacy/USAGE.md",
+      "status": "adapted"
+    },
+    {
+      "source": "examples/check_installed_package.py",
+      "source_sha256": "502f402f529316b172eca1f0148ae581f4c24564896008cf21e33260ffd5f7d1",
+      "destination": "examples/legacy/check_installed_package.py",
+      "status": "adapted"
+    },
+    {
+      "source": "examples/demo/GEOSgcm/README.md",
+      "source_sha256": "8a2665a39b811d48dd45210bb43c9c357c03a633ae5daf89ef325cb3b0b33a8e",
+      "destination": "examples/legacy/demo/GEOSgcm/README.md",
+      "status": "identical"
+    },
+    {
+      "source": "examples/demo/GFDL_atmos_cubed_sphere/dynamics.F90",
+      "source_sha256": "64bc5bad66b9cb3f6d7dd2fd49d7c9d266aee53cadf2e804beeca4671fa3fe44",
+      "destination": "examples/legacy/demo/GFDL_atmos_cubed_sphere/dynamics.F90",
+      "status": "identical"
+    },
+    {
+      "source": "examples/demo/MAPL/README.md",
+      "source_sha256": "2105ebcec37f57a6607e28dd74f200dc42ef79125b05983a1f4b0cc2e7f297ab",
+      "destination": "examples/legacy/demo/MAPL/README.md",
+      "status": "identical"
+    },
+    {
+      "source": "examples/demo/workspace.yaml",
+      "source_sha256": "a8060b869d870df0292ca92972fa45206f0b70cb20864872960ba77259d234cc",
+      "destination": "examples/legacy/demo/workspace.yaml",
+      "status": "identical"
+    },
+    {
+      "source": "examples/run_agents_demo.py",
+      "source_sha256": "4a3d4e3c6f01325de74091ab0ac02b58c7c403780c5149985111258b31c195fd",
+      "destination": "examples/legacy/run_agents_demo.py",
+      "status": "identical"
+    },
+    {
+      "source": "examples/run_engineering_demo.py",
+      "source_sha256": "e8480352d8c6ec93b4adf10a9b17cae2eec499dd249d18b1d9c3a64c448f567c",
+      "destination": "examples/legacy/run_engineering_demo.py",
+      "status": "identical"
+    },
+    {
+      "source": "examples/site/policy.yaml",
+      "source_sha256": "f30cdf602430cba8969432ff2ef72afaa1453166511a4a788fd6c48ed6f874be",
+      "destination": "examples/legacy/site/policy.yaml",
+      "status": "identical"
+    },
+    {
+      "source": "examples/site/workspace.yaml",
+      "source_sha256": "f1be0fa5e99357db056a9b7b53b75d213d929fa05686613102526f8d0f260520",
+      "destination": "examples/legacy/site/workspace.yaml",
+      "status": "identical"
+    },
+    {
+      "source": "pyproject.toml",
+      "source_sha256": "ffa078e4b8569b0e7bca211284cdc30ad34d3fcf2785a46db143dc7fb3e78c8c",
+      "destination": "pyproject.toml",
+      "status": "adapted"
+    },
+    {
+      "source": "src/geos_agents/__init__.py",
+      "source_sha256": "ed544df6a5144a04399cfc93bb584718fd8b0908f5c23aa5601699ab3303f5d4",
+      "destination": "src/geos_agents/__init__.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/__main__.py",
+      "source_sha256": "2b32a4c8becf925323d67d719fa98ec06266b40634d41fe6add07e81a09a3b17",
+      "destination": "src/geos_agents/__main__.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/agents.py",
+      "source_sha256": "41b3a84567fb3705f75dbb228427e451cde4bfbbcf7c07353445a0e6aaf66647",
+      "destination": "src/geos_agents/agents.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/benchmark.py",
+      "source_sha256": "b4c88ecbabcee1622a64aeb9630cadf1c1d672d31d75c0988bc360229b92ccf6",
+      "destination": "src/geos_agents/benchmark.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/catalog.py",
+      "source_sha256": "dbdd962e7c1f0846856c0493117c84bd8de9ea53254e75f4ba3b3a96f558f478",
+      "destination": "src/geos_agents/catalog.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/cli.py",
+      "source_sha256": "0e2aab18462e94122b1a1793320d8728d630819bbc470f5176e2d4cfe94ea51f",
+      "destination": "src/geos_agents/cli.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/context.py",
+      "source_sha256": "cb7fc0fd598f63603760500a7816b880636b4ecfbbf874fcac185560f747aba3",
+      "destination": "src/geos_agents/context.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/engineering.py",
+      "source_sha256": "f43e93cc1dd7f17ad87796a467ac4f64bb6ea07c5e5712b354d3e4c1a1d5bc9e",
+      "destination": "src/geos_agents/engineering.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/execution.py",
+      "source_sha256": "7a81efd21afd7eb2d2f9bac0c4a40975c3baf0b84a5da98ef56e1fec181c2c80",
+      "destination": "src/geos_agents/execution.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/models.py",
+      "source_sha256": "19df7e81c306e6497697e044c8dd3e5350e7064fc1357e5e6769c2e6ebb0f05b",
+      "destination": "src/geos_agents/models.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/patches.py",
+      "source_sha256": "6fd77de14a957fc9879aa659716b65867f265b30e43e55342f3e268a818c7a28",
+      "destination": "src/geos_agents/patches.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/registry.py",
+      "source_sha256": "2d391c07903d79d9bffc7ababf3a7c87d8da2f4796429172ee2df76089e30333",
+      "destination": "src/geos_agents/registry.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/session_cli.py",
+      "source_sha256": "4494b52deae31f22975295f5536a56ee611d224496014ab508659407a6a4d894",
+      "destination": "src/geos_agents/session_cli.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/sessions.py",
+      "source_sha256": "a3d597e50d4dfff52b0f33c0028317d372435926c1d2e83e0a498bad11a196d8",
+      "destination": "src/geos_agents/sessions.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/trace.py",
+      "source_sha256": "35cc1cca18da2de280d547bb29395aea2ed3f8f7d54c9f5da66b9f3d56ed2579",
+      "destination": "src/geos_agents/trace.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/validation.py",
+      "source_sha256": "374393e18d49b4b5304cf5398b06753704790ace221463ef4a5ed3ca8ca650f6",
+      "destination": "src/geos_agents/validation.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/workflows.py",
+      "source_sha256": "8a1b2782166f34c782b5cf44c626d385f3a0a98d9c66759e3a4e3fe4500b53ad",
+      "destination": "src/geos_agents/workflows.py",
+      "status": "identical"
+    },
+    {
+      "source": "src/geos_agents/workspace.py",
+      "source_sha256": "44a0d65c150aaf9e3cce4765cc4ceef0f5b51ece4ef2ecbabead5568df1b2967",
+      "destination": "src/geos_agents/workspace.py",
+      "status": "identical"
+    },
+    {
+      "source": "tests/test_cli_tools.py",
+      "source_sha256": "163ba7b48c9c9050ea7168da4e1bcc236b28cf307aca418524f5543d28db57b5",
+      "destination": "tests/legacy/test_cli_tools.py",
+      "status": "adapted"
+    },
+    {
+      "source": "tests/test_engineering.py",
+      "source_sha256": "002a5e95f3e55a038c3de612e507bd7be5affe5ae949f0cd4074efb329101392",
+      "destination": "tests/legacy/test_engineering.py",
+      "status": "identical"
+    },
+    {
+      "source": "tests/test_execution_validation.py",
+      "source_sha256": "d83f3bcf0d7b6e5a87444511f7d57811d83dfcc221db15200423d6c9fbc23c52",
+      "destination": "tests/legacy/test_execution_validation.py",
+      "status": "identical"
+    },
+    {
+      "source": "tests/test_patches.py",
+      "source_sha256": "115212cffb3c2a05dda4c69961fe18ea9450f98d4e4508fa3f27fd25a012d20f",
+      "destination": "tests/legacy/test_patches.py",
+      "status": "identical"
+    },
+    {
+      "source": "tests/test_registry_context.py",
+      "source_sha256": "b58896e58ef1f17cb74d10042c9b9fe7c210213b19fa702540417d8c53248b1b",
+      "destination": "tests/legacy/test_registry_context.py",
+      "status": "identical"
+    },
+    {
+      "source": "tests/test_sessions.py",
+      "source_sha256": "c0923a25e284e0958be4cdddca425348ae0c2d5d3a7e23bc7f548b8895210614",
+      "destination": "tests/legacy/test_sessions.py",
+      "status": "adapted"
+    },
+    {
+      "source": "tests/test_workflows.py",
+      "source_sha256": "1b9447b216916f2cb359bb03c3c734f01af790042da9adede32cfa44e9335031",
+      "destination": "tests/legacy/test_workflows.py",
+      "status": "adapted"
+    },
+    {
+      "source": "uv.lock",
+      "source_sha256": "b744223c9513008b4609ef2a90296ec0b888dbe933128f97ade2708d9ed56c2e",
+      "destination": null,
+      "status": "history-only"
+    }
+  ]
+}

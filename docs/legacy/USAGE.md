@@ -1,5 +1,10 @@
 # Usage
 
+> These supported GEOS Agent interfaces now live in `nexus-atom-geos`. Follow
+> [installation](../READINESS.md), activate that environment, and run commands
+> from the repository root. The `legacy` directory records their origin; it
+> does not require installing the old standalone distribution.
+
 For durable task graphs, shared findings and interactive resume, see [sessions](SESSIONS.md).
 
 ## Install and smoke test
@@ -12,7 +17,7 @@ source .venv/bin/activate
 python -m pip install -e '.[dev]'
 geos-agent catalog
 geos-agent gpu-port 'Port pressure_log to CUDA' \
-  --workspace examples/demo/workspace.yaml --offline
+  --workspace examples/legacy/demo/workspace.yaml --offline
 ```
 
 Offline mode never imports the model runtime and never performs model inference.
@@ -116,7 +121,7 @@ See [site integration](SITE-INTEGRATION.md) before executing against GEOS. For a
 fully runnable local example:
 
 ```bash
-python examples/run_engineering_demo.py
+python examples/legacy/run_engineering_demo.py
 ```
 
 The script prints the Markdown report path and leaves a generated `workspace.yaml`,

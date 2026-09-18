@@ -1,5 +1,10 @@
 # GEOS site integration
 
+> These supported GEOS Agent interfaces now live in `nexus-atom-geos`. Follow
+> [installation](../READINESS.md), activate that environment, and run commands
+> from the repository root. The `legacy` directory records their origin; it
+> does not require installing the old standalone distribution.
+
 The library supplies the engineering process. Your site supplies the compiler,
 MPI/CUDA stack, ESMF/Baselibs, scheduler allocation, input datasets, restart/oracle
 outputs, experiment scripts and scientifically approved tolerances. Do not infer

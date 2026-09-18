@@ -1,5 +1,10 @@
 # Durable sessions, task graphs and memory
 
+> These supported GEOS Agent interfaces now live in `nexus-atom-geos`. Follow
+> [installation](../READINESS.md), activate that environment, and run commands
+> from the repository root. The `legacy` directory records their origin; it
+> does not require installing the old standalone distribution.
+
 `GEOSSession` separates conversation state from engineering state. NOOA specialists
 retain private state only while reasoning. The shared session records objectives,
 task dependencies, decisions, source revisions, findings, outputs and artifact

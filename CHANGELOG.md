@@ -17,3 +17,6 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   evaluator identities, and evidence requirements enforced by the software gate.
 - Export each phase's benchmark samples and timing scope to a sealed CSV artifact.
 - Add explicit plot field selection and automatic comparison artifacts during validation, including failed numerical/scientific comparisons.
+- Make this repository the canonical GEOS Agent home: migrate usage/readiness
+  guides and runnable specialist/session examples, correct legacy paths, retain
+  source history and namespaced release tags, and add clean-wheel agent checks.

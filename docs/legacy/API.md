@@ -1,6 +1,11 @@
 # Python API
 
-The top-level package is `geos_agents`; the distribution is `nexus-geos-agent`.
+> These supported GEOS Agent interfaces now live in `nexus-atom-geos`. Follow
+> [installation](../READINESS.md), activate that environment, and run commands
+> from the repository root. The `legacy` directory records their origin; it
+> does not require installing the old standalone distribution.
+
+The top-level package is `geos_agents`; the distribution is `nexus-atom-geos`.
 NOOA is required at installation, but offline tools do not import its runtime.
 
 ## Inspect and plan offline
@@ -12,7 +17,7 @@ from geos_agents.models import GEOSTask, Workflow
 from geos_agents.registry import RepositoryRegistry
 from geos_agents.workflows import WorkflowRunner
 
-registry = RepositoryRegistry.from_file(Path("examples/demo/workspace.yaml"))
+registry = RepositoryRegistry.from_file(Path("examples/legacy/demo/workspace.yaml"))
 runner = WorkflowRunner(registry, Path(".geos-agent/runs"))
 result = asyncio.run(runner.execute(GEOSTask(
     description="Port pressure_log to CUDA",

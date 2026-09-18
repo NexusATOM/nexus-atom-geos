@@ -1,4 +1,4 @@
-# Nexus ATOM GEOS
+# Nexus ATOM GEOS Agent and Model Plugin
 
 The first ATOM model plugin and the flagship modernization workflow. It exposes `geos.inspect`, `build`, `test`, `sanitize`, `run`, `profile`, `benchmark`, `optimize`, `validate` and `diagnose` through Core capabilities. The shared controller never imports GEOS compilation logic.
 
@@ -13,7 +13,15 @@ This runs a real local engineering lifecycle on a **synthetic Python kernel**, n
 
 The plugin supports prepared file proposals and configured local/NOOA agents with explicit source targets. It imports mepo layouts through the preserved repository registry and rejects dirty baselines, stale source hashes, path escapes and changes outside selected agent targets. Commands run in detached worktrees. Baseline/candidate commands and Slurm resources can differ, while experiment identity and data must remain comparable. Slurm benchmarks require fresh application timing files; queue time is never treated as compute speedup.
 
-`geos_agents` is retained for compatibility, including the `geos-agent` CLI, typed NOOA specialists, source search, sessions and the earlier engineering workflow. Those tools were carried forward from [nasa-nccs-hpda/nexus-geos-agent](https://github.com/nasa-nccs-hpda/nexus-geos-agent), commit `1277ec0`, under Apache-2.0. The copy in this package retains that revision; standalone documentation and release readiness evolve in the original repository. Legacy docs and examples live under `docs/legacy` and `examples/legacy`; their original relative paths may need that prefix. Install `[nooa]` for live NOOA reasoning and the legacy runtime tests.
+This repository is the canonical home of the GEOS Agent. It includes all six NOOA
+specialists, source tools, durable sessions, and the `geos-agent` CLI, alongside
+the `nexus_atom_geos` plugin. You can use the agent CLI without running ATOM
+Controller. [Agent usage](docs/AGENTS.md) explains the roles and tool composition;
+[readiness and setup](docs/READINESS.md) gives runnable commands.
+The implementation originated in `nasa-nccs-hpda/nexus-geos-agent` under Apache-2.0;
+its source, tests, fixtures, history, and release tags are preserved here. See
+[migration coverage](docs/MIGRATION.md). The old repository is no longer required.
+Install `[nooa]` for live specialist reasoning and the scripted NOOA example.
 
 ECCO, LIS, ISSM and ModelE entry points are included as small **synthetic plugin contract examples** in `nexus_atom_geos.examples`. Run them with `atom run --system ecco --demo ...` (substitute the model name). They exercise the shared controller/evaluator/artifact protocol and do not claim upstream model execution. Separate production model repositories are deliberately deferred as specified in the plan.
 
@@ -36,7 +44,9 @@ Apache-2.0. This is an independent implementation for model orchestration, not a
 
 ## Documentation
 
-- [How to use the GEOS specialist agents](https://github.com/nasa-nccs-hpda/nexus-geos-agent/blob/main/docs/AGENTS.md) (standalone setup; use a separate environment from this package)
+- [How to use and orchestrate the agents](docs/AGENTS.md)
+- [Setup and readiness](docs/READINESS.md)
+- [Migration coverage and preserved history](docs/MIGRATION.md)
 
 - [Discover configuration](docs/DISCOVER.md)
 - [Usage and configuration](docs/USAGE.md)

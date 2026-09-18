@@ -13,7 +13,7 @@ dependencies = ["nexus-atom-core>=0.1,<0.2", "nexus-atom-hpc>=0.1,<0.2", "nexus-
 
 [project.optional-dependencies]
 plots = ["nexus-atom-science[plots]>=0.1,<0.2"]
-dev = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2", "ruff>=0.14,<1", "build>=1,<2"]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2", "pytest-cov>=6,<8", "ruff>=0.14,<1", "build>=1,<2"]
 nooa = ["nooa==0.0.10"]
 
 [project.scripts]
