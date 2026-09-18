@@ -39,6 +39,7 @@ something_else:
     binding = registry.get("fvdycore")
     assert binding.path == tmp_path / "src/@FV/@fvdycore"
     assert binding.expected_ref == "geos/v3.0.0"
+    assert registry.get("Unknown").path == tmp_path / "ignored"
     profile = tmp_path / "workspace.yaml"
     registry.write(profile)
     assert RepositoryRegistry.from_file(profile).get("fvdycore") == binding
@@ -110,3 +111,15 @@ def test_profile_paths_relative_to_profile(tmp_path, monkeypatch):
     profile.write_text("repositories:\n- name: MAPL\n  path: ./mapl\n")
     monkeypatch.chdir(Path("/"))
     assert RepositoryRegistry.from_file(profile).get("MAPL").path == tmp_path / "mapl"
+
+
+def test_gitignored_source_is_not_sent_as_context(tmp_path):
+    import subprocess
+
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / ".gitignore").write_text("private.yaml\n")
+    (tmp_path / "private.yaml").write_text("epv: private configuration")
+    (tmp_path / "code.F90").write_text("subroutine epv\nend\n")
+    registry = RepositoryRegistry([RepositoryBinding(name="MAPL", path=tmp_path)])
+    context = ContextLoader(registry).load("MAPL", "epv")
+    assert [e.path for e in context.evidence] == ["code.F90"]

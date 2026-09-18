@@ -91,6 +91,7 @@ class GEOSWorkspace:
                 RepositoryBinding(
                     name=binding.name,
                     path=target,
+                    remote=binding.remote,
                     expected_ref=binding.expected_ref,
                     component=binding.component,
                     commands=binding.commands,

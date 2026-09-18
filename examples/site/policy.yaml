@@ -1,0 +1,27 @@
+# TEMPLATE only. Choose tolerances and the resolution ladder with GEOS owners.
+gates:
+  - {repository: GEOSgcm, command: build, kind: build}
+  - {repository: GEOSgcm, command: unit, kind: validation}
+  - {repository: GEOSgcm, command: c24, kind: validation}
+  - {repository: GEOSgcm, command: c96, kind: validation}
+numerical:
+  - repository: GEOSgcm
+    output: build/validation/c24-fields.json
+    policy: {atol: 0, rtol: 0, bitwise: true}
+  - repository: GEOSgcm
+    output: build/validation/c96-fields.json
+    policy: {atol: 0, rtol: 0, bitwise: true}
+benchmarks:
+  - repository: GEOSgcm
+    command: benchmark-c96
+    repeats: 5
+    warmups: 1
+    environment:
+      hardware: "REPLACE with node and GPU model/count"
+      compiler: "REPLACE with compiler/MPI versions and flags"
+      resolution: C96
+      mpi_layout: "REPLACE with rank layout"
+      threads: 1
+      dataset: "REPLACE with input/restart dataset digest"
+    # Set minimum_speedup if a measured performance gate is required.
+max_repairs: 1

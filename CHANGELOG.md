@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0 — 2026-09-18
+
+- Import all mepo components and permit explicit bindings beyond the curated catalog.
+- Respect Git ignore rules when gathering source context from real checkouts.
+- Fingerprint dirty tracked and newly created source files during benchmark trials.
+- Record runtime/model configuration and cap generation output tokens.
+- Feed measured baseline timing evidence through PerformanceAgent, architecture
+  synthesis and coding proposals without treating whole-command timings as kernel profiles.
+- Add reproducible dependency lock, Python 3.12/3.13 CI, package build checks,
+  full synthetic engineering demo and site integration templates.
+- Document public APIs, scientific limits, execution boundaries and release workflow.
+- License original project code under Apache-2.0; upstream libraries remain external dependencies.
+
 ## 0.1.0a3 — 2026-09-18
 
 - Add GEOSWorkspace and the integrated `work` engineering lifecycle in detached worktrees.

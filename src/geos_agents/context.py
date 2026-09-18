@@ -147,6 +147,39 @@ class ContextLoader:
         def paths():
             for name in PRIORITY_FILES:
                 yield root / name
+            if (root / ".git").exists():
+                # Respect .gitignore in actual checkouts so generated results and
+                # local private configuration do not become model source context.
+                listed = subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(root),
+                        "ls-files",
+                        "--cached",
+                        "--others",
+                        "--exclude-standard",
+                        "-z",
+                    ],
+                    capture_output=True,
+                    check=True,
+                    timeout=10,
+                )
+                for relative in sorted(set(os.fsdecode(listed.stdout).split("\x00"))):
+                    part = Path(relative)
+                    if not relative or relative in PRIORITY_FILES:
+                        continue
+                    if any(p.startswith(".") or p in SKIP_DIRS for p in part.parts):
+                        continue
+                    if part.suffix.lower() not in SOURCE_SUFFIXES:
+                        continue
+                    try:
+                        path = confined_file(root, relative)
+                    except ValueError:
+                        continue
+                    if not any(path.is_relative_to(p) for p in excluded):
+                        yield path
+                return
             for directory, dirs, files in os.walk(root, followlinks=False):
                 parent = Path(directory)
                 dirs[:] = sorted(

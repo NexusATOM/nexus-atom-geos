@@ -69,6 +69,8 @@ async def test_real_nooa_predict_and_orchestration(tmp_path):
         "validation",
     }
     assert result.assessments["cuda"].findings[0].evidence_ids == (context.evidence[0].id,)
+    assert "log_pressure" in json.dumps(llm.last_messages)
+    assert context.evidence[0].sha256 in json.dumps(llm.last_messages)
 
 
 async def test_hallucinated_citation_is_rejected_and_traced(tmp_path):

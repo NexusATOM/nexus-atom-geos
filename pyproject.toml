@@ -4,9 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nexus-geos-agent"
-version = "0.1.0a3"
+version = "0.1.0"
 description = "Evidence-driven GEOS engineering agents built on NVIDIA NOOA"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.12,<3.14"
 dependencies = ["nooa==0.0.10", "pydantic>=2.5,<3", "PyYAML>=6,<7"]
 
@@ -35,3 +37,7 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 ignore = ["E501"]
+
+[tool.coverage.run]
+source = ["geos_agents"]
+omit = ["*/__main__.py"]

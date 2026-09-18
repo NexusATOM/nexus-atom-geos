@@ -203,8 +203,16 @@ async def test_model_repair_uses_current_digests_and_has_hard_bound(
     assessment = json.dumps(
         {"summary": "Need targeted kernel source", "findings": [], "unknowns": ["Test required"]}
     )
-    llm = FakeLLMClient.with_code_responses(
-        [assessment] * 3 + [initial.model_dump_json(), repaired.model_dump_json()]
+    prompts = []
+
+    class RecordingFake(FakeLLMClient):
+        async def acall(self, *args, **kwargs):
+            response = await super().acall(*args, **kwargs)
+            prompts.append(json.dumps(self.last_messages))
+            return response
+
+    llm = RecordingFake.with_code_responses(
+        [assessment] * 4 + [initial.model_dump_json(), repaired.model_dump_json()]
     )
     result = await runner.work(
         GEOSTask(description="Refactor compute in kernel", repositories=("MAPL",)),
@@ -215,7 +223,10 @@ async def test_model_repair_uses_current_digests_and_has_hard_bound(
     )
     assert result["status"] == "validated"
     assert len(result["attempts"]) == 2
-    assert llm.call_count == 5
+    assert llm.call_count == 6
+    assert "measurement:baseline:0" in prompts[1]
+    assert "median_seconds" in prompts[4]
+    assert digest(bad.encode()) in prompts[5]
 
 
 async def test_stale_output_cannot_pass_validation(engineering_fixture, tmp_path):
@@ -240,3 +251,103 @@ async def test_stale_output_cannot_pass_validation(engineering_fixture, tmp_path
         )
     report = json.loads((runner.last_trace.directory / "report.json").read_text())
     assert report["status"] == "error"
+
+
+async def test_failed_baseline_and_performance_gates(engineering_fixture, tmp_path):
+    registry, policy, original = engineering_fixture
+    proposal = make_proposal(original, "def compute():\n    return 1.0 + 1.0\n")
+    strict = policy.model_copy(
+        update={
+            "benchmarks": (policy.benchmarks[0].model_copy(update={"minimum_speedup": 1000000}),)
+        }
+    )
+    runner = EngineeringRunner(registry, tmp_path / "runs")
+    result = await runner.work(
+        GEOSTask(description="Require impossible improvement"),
+        strict,
+        execute=True,
+        proposal=proposal,
+    )
+    assert result["status"] == "performance_failed"
+    binding = registry.get("MAPL")
+    bad_commands = dict(
+        binding.commands,
+        build=CommandSpec(argv=(sys.executable, "-c", "raise SystemExit(17)"), purpose="build"),
+    )
+    broken = RepositoryRegistry([binding.model_copy(update={"commands": bad_commands})])
+    runner = EngineeringRunner(broken, tmp_path / "runs")
+    result = await runner.work(
+        GEOSTask(description="Baseline failure"), policy, execute=True, proposal=proposal
+    )
+    assert result["status"] == "baseline_failed"
+    assert not result["attempts"]
+
+
+def test_nested_mepo_worktrees_preserve_placement(tmp_path):
+    from geos_agents.trace import RunTrace
+    from geos_agents.workspace import GEOSWorkspace
+
+    parent = tmp_path / "GEOSgcm"
+    nested = parent / "src/@MAPL"
+    nested.mkdir(parents=True)
+    (parent / ".gitignore").write_text("src/@MAPL/\n")
+    (nested / "README.md").write_text("nested repository")
+    for root in (parent, nested):
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "-qm",
+                "fixture",
+            ],
+            check=True,
+        )
+    registry = RepositoryRegistry(
+        [
+            RepositoryBinding(name="GEOSgcm", path=parent),
+            RepositoryBinding(name="MAPL", path=nested),
+        ]
+    )
+    workspace = GEOSWorkspace(registry, RunTrace(tmp_path / "runs"))
+    isolated = workspace.isolate(workspace.artifacts.directory / "checkouts")
+    root = isolated.repositories.get("GEOSgcm").path
+    child = isolated.repositories.get("MAPL").path
+    assert child == root / "src/@MAPL"
+    assert (child / "README.md").read_text() == "nested repository"
+    assert (child / ".git").is_file()
+
+
+def test_cli_work_dry_run(engineering_fixture, tmp_path, capsys):
+    import yaml
+
+    from geos_agents.cli import main
+
+    registry, policy, original = engineering_fixture
+    profile = tmp_path / "workspace.yaml"
+    registry.write(profile)
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(yaml.safe_dump(policy.model_dump(mode="json")))
+    assert (
+        main(
+            [
+                "work",
+                "Plan an optimization",
+                "--workspace",
+                str(profile),
+                "--policy",
+                str(policy_path),
+                "--output",
+                str(tmp_path / "runs"),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "planned"

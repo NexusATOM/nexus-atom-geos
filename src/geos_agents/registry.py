@@ -15,8 +15,13 @@ class RepositoryRegistry:
     def __init__(self, bindings: list[RepositoryBinding] | None = None):
         self.bindings: dict[str, RepositoryBinding] = {}
         for binding in bindings or []:
-            name = resolve(binding.name).name
-            if name in self.bindings:
+            try:
+                name = resolve(binding.name).name
+            except ValueError:
+                name = binding.name
+                if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", name):
+                    raise ValueError(f"Invalid repository name: {name}") from None
+            if name.casefold() in {key.casefold() for key in self.bindings}:
                 raise ValueError(f"Duplicate repository binding: {name}")
             self.bindings[name] = binding.model_copy(
                 update={"name": name, "path": binding.path.expanduser().resolve()}
@@ -41,7 +46,7 @@ class RepositoryRegistry:
 
     @classmethod
     def from_mepo(cls, fixture: Path) -> RepositoryRegistry:
-        """Import known components. Unknown components are left unbound, never cloned.
+        """Import all local components; catalogued repositories gain canonical aliases.
 
         mepo's @ directory markers are literal characters, not template syntax.
         Component nesting describes placement, not a scientific dependency edge.
@@ -57,9 +62,9 @@ class RepositoryRegistry:
             remote = str(config.get("remote", ""))
             name = remote.rstrip("/").rsplit("/", 1)[-1].removesuffix(".git")
             try:
-                spec = resolve(name or str(component))
+                name = resolve(name or str(component)).name
             except ValueError:
-                continue
+                name = name or str(component)
             local = config.get("local")
             if not isinstance(local, str) or not local:
                 raise ValueError(f"Missing local path for {component}")
@@ -68,8 +73,9 @@ class RepositoryRegistry:
                 raise ValueError(f"Component path escapes or aliases fixture: {component}")
             bindings.append(
                 RepositoryBinding(
-                    name=spec.name,
+                    name=name,
                     path=path,
+                    remote=remote or None,
                     component=str(component),
                     expected_ref=str(config["tag"]) if "tag" in config else None,
                 )
@@ -89,7 +95,12 @@ class RepositoryRegistry:
             yaml.safe_dump({"repositories": rows}, stream, sort_keys=False)
 
     def get(self, name: str) -> RepositoryBinding:
-        canonical = resolve(name).name
+        try:
+            canonical = resolve(name).name
+        except ValueError:
+            canonical = next(
+                (key for key in self.bindings if key.casefold() == name.casefold()), name
+            )
         if canonical not in self.bindings:
             raise ValueError(f"Repository {canonical} is not bound in the workspace profile")
         return self.bindings[canonical]

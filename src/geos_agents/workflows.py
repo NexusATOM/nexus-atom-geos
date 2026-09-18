@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import re
 from importlib.metadata import version
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,6 +18,7 @@ from geos_agents.models import (
     GEOSTask,
     PatchProposal,
     RepositoryContext,
+    TimingEvidence,
     ValidationPlan,
     Workflow,
 )
@@ -53,8 +56,10 @@ def validation_plan(task: GEOSTask) -> ValidationPlan:
     )
 
 
-def check_citations(assessment: Assessment, contexts: tuple[RepositoryContext, ...]) -> Assessment:
-    known = {e.id for context in contexts for e in context.evidence}
+def check_citations(
+    assessment: Assessment, contexts: tuple[RepositoryContext, ...], extra_ids: tuple[str, ...] = ()
+) -> Assessment:
+    known = {e.id for context in contexts for e in context.evidence} | set(extra_ids)
     unknown = {
         ref for finding in assessment.findings for ref in finding.evidence_ids if ref not in known
     }
@@ -72,6 +77,7 @@ class WorkflowRunner:
         context_chars: int = 24000,
         call_timeout: float = 120,
         targets: tuple[tuple[str, str], ...] = (),
+        measurements: tuple[TimingEvidence, ...] = (),
     ):
         if not 0 < call_timeout <= 3600:
             raise ValueError("call_timeout must be in (0, 3600]")
@@ -80,6 +86,7 @@ class WorkflowRunner:
         self.loader = ContextLoader(registry, max_chars=context_chars)
         self.call_timeout = call_timeout
         self.targets = targets
+        self.measurements = measurements
         self.last_trace: RunTrace | None = None
 
     async def execute(self, task: GEOSTask, *, llm: UnifiedLLM | None = None) -> GEOSResult:
@@ -89,6 +96,10 @@ class WorkflowRunner:
             "workflow", workflow=task.workflow.value, mode="nooa" if llm else "offline"
         ):
             trace.artifact("task.json", task)
+            if self.measurements:
+                trace.artifact(
+                    "measurements.json", [m.model_dump(mode="json") for m in self.measurements]
+                )
             trace.emit(
                 "runtime.configured",
                 package_version=__version__,
@@ -129,11 +140,11 @@ class WorkflowRunner:
             proposal = None
             usable = tuple(c for c in contexts if c.evidence)
 
-            async def invoke(label, method, *args, citation_contexts=contexts):
+            async def invoke(label, method, *args, citation_contexts=contexts, extra_ids=()):
                 with trace.span("delegation", specialist=label):
                     report = await asyncio.wait_for(method(*args), timeout=self.call_timeout)
                     if isinstance(report, Assessment):
-                        check_citations(report, citation_contexts)
+                        check_citations(report, citation_contexts, extra_ids)
                     trace.emit(
                         "delegation.result", specialist=label, result=report.model_dump(mode="json")
                     )
@@ -157,27 +168,61 @@ class WorkflowRunner:
                         context,
                         citation_contexts=(context,),
                     )
+                measurement_ids = tuple(m.id for m in self.measurements)
+                if self.measurements:
+                    assessments["performance"] = await invoke(
+                        "PerformanceAgent:diagnose",
+                        PerformanceAgent(llm=llm).diagnose,
+                        task,
+                        self.measurements,
+                        citation_contexts=(),
+                        extra_ids=measurement_ids,
+                    )
                 assessments["architecture"] = await invoke(
                     "ArchitectureAgent",
                     ArchitectureAgent(llm=llm).synthesize,
                     task,
                     contexts,
                     dict(assessments),
+                    self.measurements,
+                    extra_ids=measurement_ids,
                 )
-                if task.workflow == Workflow.GPU_PORT:
+                if task.workflow == Workflow.GPU_PORT or (
+                    task.workflow == Workflow.IMPLEMENT
+                    and re.search(r"\b(gpu|cuda)\b", task.description, re.IGNORECASE)
+                ):
                     assessments["cuda"] = await invoke(
                         "CUDAAgent", CUDAAgent(llm=llm).plan, task, contexts
                     )
-                    assessments["performance"] = await invoke(
-                        "PerformanceAgent", PerformanceAgent(llm=llm).plan, task, contexts
-                    )
+                    if not self.measurements:
+                        assessments["performance"] = await invoke(
+                            "PerformanceAgent", PerformanceAgent(llm=llm).plan, task, contexts
+                        )
                 assessments["validation"] = await invoke(
                     "ValidationAgent", ValidationAgent(llm=llm).review, task, contexts, plan
                 )
                 if task.workflow == Workflow.IMPLEMENT:
                     files = patch_inputs
                     proposal = await invoke(
-                        "RepositoryAgent:propose", RepositoryAgent(llm=llm).propose, task, files
+                        "RepositoryAgent:propose",
+                        RepositoryAgent(llm=llm).propose,
+                        task,
+                        files,
+                        json.dumps(
+                            {
+                                "assessments": {
+                                    name: {
+                                        "summary": a.summary[:2000],
+                                        "next_steps": [step[:500] for step in a.next_steps[:5]],
+                                        "unknowns": [item[:500] for item in a.unknowns[:5]],
+                                    }
+                                    for name, a in assessments.items()
+                                },
+                                "measurements": [
+                                    m.model_dump(mode="json") for m in self.measurements
+                                ],
+                            }
+                        ),
                     )
                     self._check_proposal(proposal, files)
                     trace.artifact("proposal.json", proposal)

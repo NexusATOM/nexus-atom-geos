@@ -63,6 +63,7 @@ class CommandSpec(Contract):
 class RepositoryBinding(Contract):
     name: str
     path: Path
+    remote: str | None = None
     expected_ref: str | None = None
     component: str | None = None
     commands: dict[str, CommandSpec] = Field(default_factory=dict)
@@ -114,6 +115,17 @@ class FileChange(Contract):
     before_sha256: str | None = None
     content: str = Field(max_length=262144)
     rationale: str
+
+
+class TimingEvidence(Contract):
+    id: str
+    repository: str
+    command: str
+    median_seconds: float = Field(gt=0, allow_inf_nan=False)
+    min_seconds: float = Field(gt=0, allow_inf_nan=False)
+    max_seconds: float = Field(gt=0, allow_inf_nan=False)
+    trials: int = Field(ge=2)
+    environment: dict[str, str | int]
 
 
 class PatchProposal(Contract):

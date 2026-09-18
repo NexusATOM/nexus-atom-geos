@@ -16,7 +16,7 @@ from pydantic import Field, model_validator
 
 from geos_agents.benchmark import BenchmarkEnvironment, benchmark, compare_benchmarks
 from geos_agents.context import confined_file, digest, git_state
-from geos_agents.models import Contract, GEOSTask, PatchProposal, Workflow
+from geos_agents.models import Contract, GEOSTask, PatchProposal, TimingEvidence, Workflow
 from geos_agents.patches import PatchManager
 from geos_agents.registry import RepositoryRegistry
 from geos_agents.trace import RunTrace
@@ -134,7 +134,24 @@ class EngineeringRunner:
                         "Baseline commands changed the checkout; build outputs must be ignored"
                     )
             reasoning = WorkflowRunner(
-                workspace.repositories, trace.directory / "reasoning", targets=targets
+                workspace.repositories,
+                trace.directory / "reasoning",
+                targets=targets,
+                measurements=tuple(
+                    TimingEvidence(
+                        id=f"measurement:baseline:{index}",
+                        repository=gate.repository,
+                        command=gate.command,
+                        median_seconds=measured.median_seconds,
+                        min_seconds=measured.min_seconds,
+                        max_seconds=measured.max_seconds,
+                        trials=len(measured.samples),
+                        environment=measured.environment.model_dump(mode="json"),
+                    )
+                    for index, (gate, measured) in enumerate(
+                        zip(policy.benchmarks, baseline_benchmarks, strict=True)
+                    )
+                ),
             )
             if llm is not None:
                 from geos_agents.agents import GEOSAgent
