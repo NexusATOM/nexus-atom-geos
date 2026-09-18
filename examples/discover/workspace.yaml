@@ -1,0 +1,7 @@
+repositories:
+  - name: GEOSgcm
+    path: /REPLACE/GEOSgcm
+  - name: MAPL
+    path: /REPLACE/GEOSgcm/src/Shared/@MAPL
+# Prefer `geos-agent init --mepo /actual/GEOSgcm --output workspace.local.yaml`
+# to import the actual federation instead of guessing component paths.

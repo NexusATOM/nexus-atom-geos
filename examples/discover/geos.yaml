@@ -1,0 +1,62 @@
+# Copy to geos.local.yaml and fill in your site's actual paths, modules and allocation.
+workspace: workspace.local.yaml
+repository: GEOSgcm
+backend: slurm
+resources:
+  nodes: 1
+  cpus: 12
+  gpus: 0
+  memory: 128GB
+  walltime: '01:00:00'
+  account: REPLACE_ALLOCATION
+  partition: REPLACE_PARTITION
+phase_resources:
+  candidate:
+    nodes: 1
+    cpus: 12
+    gpus: 1
+    memory: 128GB
+    walltime: '01:00:00'
+    account: REPLACE_ALLOCATION
+    partition: REPLACE_GPU_PARTITION
+    gpu_type: REPLACE_GPU_TYPE
+environment:
+  modules: [REPLACE_COMPILER_MODULE, REPLACE_MPI_MODULE, REPLACE_BASELIBS_MODULE]
+  variables:
+    OMP_NUM_THREADS: '12'
+# Site scripts live in and are versioned with the baseline fixture, or use absolute paths.
+# They must build/run the current worktree; never hard-code the original source checkout.
+commands:
+  build: [bash, atom-site/build.sh, cpu]
+  run: [bash, atom-site/run.sh, cpu]
+  benchmark: [bash, atom-site/benchmark.sh, cpu]
+  profile: [bash, atom-site/profile.sh]
+phase_commands:
+  candidate:
+    build: [bash, atom-site/build.sh, gpu]
+    run: [bash, atom-site/run.sh, gpu]
+    benchmark: [bash, atom-site/benchmark.sh, gpu]
+dataset: results/fields.json
+benchmark_seconds_file: results/timing.json
+repeats: 5
+warmups: 1
+benchmark_identity:
+  resolution: REPLACE_RESOLUTION
+  timesteps: REPLACE_MEASURED_TIMESTEPS
+  mpi_layout: REPLACE_LAYOUT
+  dataset_sha256: REPLACE_INPUT_HASH
+  compiler_flags: REPLACE_FLAGS
+tolerance:
+  bitwise: true
+# These are example diagnostics. Replace with approved GEOS science criteria.
+science:
+  diagnostics:
+    - field: dry_air_mass
+      metric: conservation
+      maximum_absolute: 0
+    - field: total_energy
+      metric: conservation
+      maximum_absolute: 0
+proposal: proposal.local.json
+# Alternatively remove proposal and configure nooa_model or runtime_argv plus targets.
+targets: []

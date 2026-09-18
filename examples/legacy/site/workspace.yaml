@@ -1,0 +1,33 @@
+# TEMPLATE: replace paths and provide the site wrapper scripts before executing.
+# Scripts must run synchronously, fail on unsuccessful jobs, and resolve paths
+# relative to their worktree cwd. Output directories must be Git-ignored.
+repositories:
+  - name: GEOSgcm
+    path: /work/GEOSgcm
+    commands:
+      build:
+        argv: ["./site/configure-and-build.sh"]
+        purpose: build
+        timeout_seconds: 7200
+      unit:
+        argv: ["ctest", "--test-dir", "build", "--output-on-failure"]
+        purpose: test
+        timeout_seconds: 1800
+      c24:
+        argv: ["./site/run-and-export-c24.sh"]
+        purpose: test
+        timeout_seconds: 7200
+      c96:
+        argv: ["./site/run-and-export-c96.sh"]
+        purpose: test
+        timeout_seconds: 14400
+      benchmark-c96:
+        argv: ["./site/benchmark-c96.sh"]
+        purpose: benchmark
+        timeout_seconds: 14400
+  - name: FVdycoreCubed_GridComp
+    path: /work/GEOSgcm/src/Components/@GEOSgcm_GridComp/GEOSagcm_GridComp/GEOSsuperdyn_GridComp/@FVdycoreCubed_GridComp
+  - name: GFDL_atmos_cubed_sphere
+    path: /work/GEOSgcm/src/Components/@GEOSgcm_GridComp/GEOSagcm_GridComp/GEOSsuperdyn_GridComp/@FVdycoreCubed_GridComp/@fvdycore
+  - name: MAPL
+    path: /work/GEOSgcm/src/Shared/@MAPL

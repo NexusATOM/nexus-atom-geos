@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.26,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nexus-atom-geos"
+version = "0.1.0"
+description = "Nexus ATOM geos: autonomous Earth-model orchestration"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12,<3.14"
+dependencies = ["nexus-atom-core>=0.1,<0.2", "nexus-atom-hpc>=0.1,<0.2", "nexus-atom-science>=0.1,<0.2", "nexus-atom-agents>=0.1,<0.2", "PyYAML>=6,<7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2", "ruff>=0.14,<1", "build>=1,<2"]
+nooa = ["nooa==0.0.10"]
+
+[project.scripts]
+geos-agent = "geos_agents.cli:main"
+
+[project.entry-points."nexus_atom.plugins"]
+geos = "nexus_atom_geos.plugin:GEOSPlugin"
+ecco = "nexus_atom_geos.examples:ECCOExample"
+lis = "nexus_atom_geos.examples:LISExample"
+issm = "nexus_atom_geos.examples:ISSMExample"
+modele = "nexus_atom_geos.examples:ModelEExample"
+
+[project.urls]
+Repository = "https://github.com/NexusATOM/nexus-atom-geos"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nexus_atom_geos", "src/geos_agents"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

@@ -1,0 +1,7 @@
+repositories:
+  - name: GEOSgcm
+    path: GEOSgcm
+  - name: GFDL_atmos_cubed_sphere
+    path: GFDL_atmos_cubed_sphere
+  - name: MAPL
+    path: MAPL

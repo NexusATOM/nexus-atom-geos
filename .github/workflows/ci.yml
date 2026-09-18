@@ -1,0 +1,52 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python: ['3.12', '3.13']
+    env:
+      LITELLM_LOCAL_MODEL_COST_MAP: 'True'
+      MPLCONFIGDIR: /tmp/atom-matplotlib
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: nexus-atom-geos
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check out sibling protocol implementations
+        shell: python
+        run: |
+          import pathlib, subprocess
+          for name in ('core','controller','agents','hpc','science','geos'):
+              repo='nexus-atom-'+name
+              if not pathlib.Path(repo).exists():
+                  subprocess.run(['git','clone','--depth','1','https://github.com/NexusATOM/'+repo+'.git',repo],check=True)
+      - name: Install workspace and test dependencies
+        run: >-
+          python -m pip install
+          -e './nexus-atom-core[dev]'
+          -e './nexus-atom-controller[dev]'
+          -e './nexus-atom-agents[dev,nooa,openai]'
+          -e './nexus-atom-hpc[dev]'
+          -e './nexus-atom-science[dev,netcdf,plots]'
+          -e './nexus-atom-geos[dev,nooa]'
+      - run: ruff check src tests
+        working-directory: nexus-atom-geos
+      - run: ruff format --check src tests
+        working-directory: nexus-atom-geos
+      - run: python -m pytest tests -q
+        working-directory: nexus-atom-geos
+      - run: python -m build
+        working-directory: nexus-atom-geos
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-atom-geos-python-${{ matrix.python }}
+          path: nexus-atom-geos/dist/*
