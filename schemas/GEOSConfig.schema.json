@@ -238,6 +238,18 @@
       "title": "Commands",
       "type": "object"
     },
+    "software_checks": {
+      "default": [],
+      "items": {
+        "enum": [
+          "test",
+          "sanitize"
+        ],
+        "type": "string"
+      },
+      "title": "Software Checks",
+      "type": "array"
+    },
     "phase_commands": {
       "additionalProperties": {
         "additionalProperties": {

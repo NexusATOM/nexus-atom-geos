@@ -16,6 +16,7 @@ class GEOSConfig(Contract):
     resources: ResourceRequest = Field(default_factory=ResourceRequest)
     environment: Environment = Field(default_factory=Environment)
     commands: dict[str, tuple[str, ...]]
+    software_checks: tuple[Literal['test', 'sanitize'], ...] = ()
     phase_commands: dict[str, dict[str, tuple[str, ...]]] = Field(default_factory=dict)
     phase_resources: dict[str, ResourceRequest] = Field(default_factory=dict)
     benchmark_seconds_file: str | None = None
@@ -138,7 +139,7 @@ def log_excerpt(path: Path, limit: int=8192) -> dict: ...
 
 ### `GEOSCapability`
 
-[Source](../src/nexus_atom_geos/plugin.py#L61)
+[Source](../src/nexus_atom_geos/plugin.py#L64)
 
 ```python
 class GEOSCapability(Capability):
@@ -148,7 +149,7 @@ class GEOSCapability(Capability):
 
 ### `GEOSEvaluator`
 
-[Source](../src/nexus_atom_geos/plugin.py#L71)
+[Source](../src/nexus_atom_geos/plugin.py#L74)
 
 ```python
 class GEOSEvaluator(Evaluator):
@@ -158,7 +159,7 @@ class GEOSEvaluator(Evaluator):
 
 ### `GEOSPlugin`
 
-[Source](../src/nexus_atom_geos/plugin.py#L129)
+[Source](../src/nexus_atom_geos/plugin.py#L138)
 
 ```python
 class GEOSPlugin(ModelPlugin):
@@ -179,12 +180,12 @@ class GEOSPlugin(ModelPlugin):
 [Source](../src/nexus_atom_geos/workflows.py#L4)
 
 ```python
-def modernization_plan(*, proposal: str | None=None, hypothesis='Optimize GEOS while preserving configured numerical and scientific criteria') -> Plan: ...
+def modernization_plan(*, proposal: str | None=None, software_checks: tuple[str, ...]=(), hypothesis='Optimize GEOS while preserving configured numerical and scientific criteria') -> Plan: ...
 ```
 
 ### `regression_plan`
 
-[Source](../src/nexus_atom_geos/workflows.py#L39)
+[Source](../src/nexus_atom_geos/workflows.py#L47)
 
 ```python
 def regression_plan() -> Plan: ...
@@ -192,7 +193,7 @@ def regression_plan() -> Plan: ...
 
 ### `debug_plan`
 
-[Source](../src/nexus_atom_geos/workflows.py#L67)
+[Source](../src/nexus_atom_geos/workflows.py#L75)
 
 ```python
 def debug_plan(): ...

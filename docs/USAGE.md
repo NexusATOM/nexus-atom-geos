@@ -85,3 +85,40 @@ candidate profiler, otherwise the common profile command is used; configurations
 with only `phase_commands.baseline.profile` reuse it for the candidate. A failed
 profiler fails the experiment rather than certifying an incompletely measured
 candidate. Each attempt still starts from the original isolated baseline.
+
+## Required software tests and sanitizers
+
+Configure `software_checks` to require separately recorded stages after each
+baseline and candidate build:
+
+```yaml
+software_checks: [test, sanitize]
+commands:
+  # Merge these with the existing build/run/benchmark/profile commands.
+  test: [ctest, --test-dir, build, --output-on-failure]
+  sanitize: [./ci/run-sanitizers.sh]
+```
+
+These are illustrative site commands, not scripts shipped for GEOS. The sanitizer
+runner must perform the intended instrumented build/execution and return nonzero
+when it detects an error. Configure its compiler flags, tools, suppressions and
+input coverage explicitly. A command's name alone does not establish that it
+performed meaningful tests or sanitizer analysis.
+
+Both phases require a command for each selected check. Use `phase_commands` to
+supply different CPU/GPU check runners. Jobs use the same resource/environment
+selection, deadlines, logs and accounting as build/run jobs. Each phase produces
+`evidence/<phase>-test.json` and/or `evidence/<phase>-sanitize.json`, plus complete
+job logs and bounded excerpts. A failure blocks downstream tasks and reaches the
+next proposal as task feedback.
+
+The default plugin goal adds `geos.tests` and `geos.sanitizers` as appropriate.
+The `geos.software` evaluator also requires the selected checks, so a custom plan
+cannot skip them and rely only on successful build/run evidence. Missing evidence
+fails acceptance. Runtime-generated plans must include `geos.test` and/or
+`geos.sanitize` in both phases when these checks are required by configuration.
+
+The default empty list preserves existing configurations and explicitly means
+that separate tests/sanitizers were not required. Site-policy artifacts record
+this selection. Production acceptance should declare the checks appropriate to
+the experiment; existing synthetic demos do not claim real sanitizer coverage.

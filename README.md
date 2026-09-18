@@ -1,6 +1,6 @@
 # Nexus ATOM GEOS
 
-The first ATOM model plugin and the flagship modernization workflow. It exposes `geos.inspect`, `build`, `run`, `profile`, `benchmark`, `optimize`, `validate` and `diagnose` through Core capabilities. The shared controller never imports GEOS compilation logic.
+The first ATOM model plugin and the flagship modernization workflow. It exposes `geos.inspect`, `build`, `test`, `sanitize`, `run`, `profile`, `benchmark`, `optimize`, `validate` and `diagnose` through Core capabilities. The shared controller never imports GEOS compilation logic.
 
 The workflow inspects the repository federation, creates detached worktrees, builds/runs/benchmarks/profiles a baseline, applies a checked proposal, then builds/runs/benchmarks the candidate and evaluates software, numerical, science and performance evidence. Failed candidates remain rejected. Source commits, policies, job logs, generated fields, repeated timing samples, proposals and patches become sealed experiment evidence.
 
@@ -42,3 +42,5 @@ Apache-2.0. This is an independent implementation for model orchestration, not a
 - [Contributing](CONTRIBUTING.md)
 - [Execution boundaries](SECURITY.md)
 - [Changes](CHANGELOG.md)
+
+Configured `software_checks: [test, sanitize]` add required baseline/candidate check stages and separate acceptance evidence. See [required tests and sanitizers](docs/USAGE.md#required-software-tests-and-sanitizers); the default empty list makes no test/sanitizer coverage claim.

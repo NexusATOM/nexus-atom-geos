@@ -4,16 +4,23 @@ from nexus_atom_core import Plan, Task, TaskGraph
 def modernization_plan(
     *,
     proposal: str | None = None,
+    software_checks: tuple[str, ...] = (),
     hypothesis="Optimize GEOS while preserving configured numerical and scientific criteria",
 ) -> Plan:
+    if set(software_checks) - {"test", "sanitize"} or len(set(software_checks)) != len(
+        software_checks
+    ):
+        raise ValueError("Software checks must be unique test/sanitize operations")
     operations = [
         ("inspect", "baseline"),
         ("build", "baseline"),
+        *((check, "baseline") for check in software_checks),
         ("run", "baseline"),
         ("benchmark", "baseline"),
         ("profile", "baseline"),
         ("optimize", "candidate"),
         ("build", "candidate"),
+        *((check, "candidate") for check in software_checks),
         ("run", "candidate"),
         ("benchmark", "candidate"),
         ("profile", "candidate"),

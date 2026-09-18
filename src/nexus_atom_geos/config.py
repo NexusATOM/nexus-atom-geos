@@ -14,6 +14,7 @@ class GEOSConfig(Contract):
     resources: ResourceRequest = Field(default_factory=ResourceRequest)
     environment: Environment = Field(default_factory=Environment)
     commands: dict[str, tuple[str, ...]]
+    software_checks: tuple[Literal["test", "sanitize"], ...] = ()
     phase_commands: dict[str, dict[str, tuple[str, ...]]] = Field(default_factory=dict)
     phase_resources: dict[str, ResourceRequest] = Field(default_factory=dict)
     benchmark_seconds_file: str | None = None
@@ -30,6 +31,8 @@ class GEOSConfig(Contract):
 
     @model_validator(mode="after")
     def configured(self):
+        if len(set(self.software_checks)) != len(self.software_checks):
+            raise ValueError("Duplicate software check")
         if set(self.phase_commands) - {"baseline", "candidate"} or set(self.phase_resources) - {
             "baseline",
             "candidate",
@@ -39,6 +42,8 @@ class GEOSConfig(Contract):
             commands = {**self.commands, **self.phase_commands.get(phase, {})}
             if any(not commands.get(op) for op in ("build", "run", "benchmark")):
                 raise ValueError("Configure build, run and benchmark commands for both phases")
+            if any(not commands.get(op) for op in self.software_checks):
+                raise ValueError(f"Configure every required software check for {phase}")
         if not self.commands.get("profile") and not self.phase_commands.get("baseline", {}).get(
             "profile"
         ):

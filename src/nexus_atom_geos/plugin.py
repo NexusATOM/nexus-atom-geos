@@ -77,11 +77,17 @@ class GEOSEvaluator(Evaluator):
 
     async def evaluate(self, goal, results, directory):
         evidence = directory / "evidence"
-        if self.name == "software":
+        if self.name in {"software", "tests", "sanitizers"}:
+            checks = self.plugin.config.software_checks
+            kinds = (
+                ("build", "run", *checks)
+                if self.name == "software"
+                else ("test" if self.name == "tests" else "sanitize",)
+            )
             records = [
                 json.loads((evidence / f"{phase}-{kind}.json").read_text())
                 for phase in ("baseline", "candidate")
-                for kind in ("build", "run")
+                for kind in kinds
             ]
             return Evaluation(
                 evaluator=self.name,
@@ -89,7 +95,7 @@ class GEOSEvaluator(Evaluator):
                 evidence=tuple(
                     f"evidence/{phase}-{kind}.json"
                     for phase in ("baseline", "candidate")
-                    for kind in ("build", "run")
+                    for kind in kinds
                 ),
             )
         if self.name == "performance":
@@ -144,6 +150,8 @@ class GEOSPlugin(ModelPlugin):
             for op in (
                 "inspect",
                 "build",
+                "test",
+                "sanitize",
                 "run",
                 "profile",
                 "benchmark",
@@ -156,7 +164,7 @@ class GEOSPlugin(ModelPlugin):
     def evaluators(self):
         return [
             GEOSEvaluator(self, name)
-            for name in ("software", "numerical", "science", "performance")
+            for name in ("software", "tests", "sanitizers", "numerical", "science", "performance")
         ]
 
     def _workspace(self, context):
@@ -219,7 +227,7 @@ class GEOSPlugin(ModelPlugin):
         else:
             registry = self._workspace(context)
             root = registry.get(self.config.repository).path
-            if operation in {"build", "run", "profile"}:
+            if operation in {"build", "run", "profile", "test", "sanitize"}:
                 if operation == "run":
                     output = confined_file(root, self.config.dataset)
                     if output.exists():
@@ -396,7 +404,12 @@ class GEOSPlugin(ModelPlugin):
         return cls(prepare_demo(directory))
 
     def goal_constraints(self):
-        return tuple(f"geos.{name}" for name in ("software", "numerical", "science", "performance"))
+        checks = self.config.software_checks if self.config else ()
+        additional = tuple("tests" if check == "test" else "sanitizers" for check in checks)
+        return tuple(
+            f"geos.{name}"
+            for name in ("software", *additional, "numerical", "science", "performance")
+        )
 
     async def plan(self, goal, history, registry):
         from .workflows import modernization_plan
@@ -408,7 +421,9 @@ class GEOSPlugin(ModelPlugin):
             feedback = " Previous attempt: " + json.dumps(
                 [e.model_dump(mode="json") for e in history[-1].evaluations]
             )
-        plan = modernization_plan(hypothesis=goal.objective + feedback)
+        plan = modernization_plan(
+            hypothesis=goal.objective + feedback, software_checks=self.config.software_checks
+        )
         tasks = tuple(
             task.model_copy(
                 update={

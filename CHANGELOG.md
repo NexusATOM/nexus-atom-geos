@@ -13,3 +13,5 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   subprocess runtime and the shared controller.
 - Profile the candidate after benchmarking, preserving its measured behavior for
   subsequent hypothesis revision; support baseline-only profiler configurations.
+- Add configurable mandatory test and sanitizer stages for both phases, separate
+  evaluator identities, and evidence requirements enforced by the software gate.
