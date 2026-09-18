@@ -257,10 +257,54 @@ measurements and evaluations. Controller history and checkpoints preserve the
 same feedback across resume. Source and proposal text are untrusted evidence,
 not instructions or permission to relax acceptance checks.
 
-Each trial still starts from the original configured source. Generate a complete
+With the default `continuation: original`, each trial starts from the original
+configured source. Generate a complete
 replacement proposal against the current supplied file hashes; do not return an
 incremental patch against a prior candidate. A valid candidate below the goal
 may inform a new proposal, but `best_valid_candidate` does not automatically
-change the source checkout. Explicit accumulation/rebasing is not implemented.
+change the source checkout. Opt-in continuation is described below.
 Proposals rejected before successful patch application do not produce this
 feedback record; task failure details remain available.
+
+
+## Continue from the best accepted candidate
+
+For runtime-driven modernization, set:
+
+```yaml
+continuation: best_valid
+```
+
+This requires `workflow: modernization`, a local or NOOA proposal runtime,
+and explicit source `targets`. It is not supported for prepared patches,
+regression or debug workflows. The default remains `original`.
+
+Controller supplies its selected `parent_experiment` to execution; a model cannot
+select a different parent through task parameters. GEOS still builds, runs,
+profiles and benchmarks the original configured source first. Before requesting
+the next proposal it verifies the parent's sealed cumulative proposal and
+original commit records, applies that proposal to the new detached worktrees,
+and records a local seed commit. Original checkouts and prior experiments are
+unchanged. Git hooks and signing are disabled for this internal seed commit.
+
+The runtime receives the reconstructed source and hashes plus `continuation`
+metadata, plus the parent candidate’s recorded profile, benchmark and validation
+results. It must propose incremental replacements against those supplied hashes.
+The new candidate is compared against the original source in the current
+attempt, so reported speedup is total improvement, not a multiplied chain of
+ratios. A rejected or dominated candidate does not become the next source base.
+The controller's existing multidimensional promotion policy selects the parent.
+
+`evidence/continuation.json` records parent and policy. `proposal.json` records
+the incremental change; `cumulative-proposal.json` records the complete bounded
+replacement against original source. The latter retains original before-hashes
+when the same file changes again. Existing proposal limits apply to the union
+of changed files (at most 12); exceeding them fails before applying the next patch.
+Inherited edits must stay within configured targets. A changed original commit,
+missing/corrupted artifact, stale before-hash or invalid parent fails closed.
+Legacy experiments lacking a cumulative proposal cannot seed continuation.
+
+Continuation persists across goal resume. The automated synthetic case accepts
+one change, rejects the next, then successfully repairs from the earlier accepted
+candidate after a process/store restart. Its timing values are scripted test
+inputs and provide no performance evidence for GEOS.

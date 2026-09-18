@@ -41,3 +41,11 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   against the actual attempted changes.
 - Document replacement proposals against original source and the absence of
   implicit candidate accumulation.
+
+### Accepted-candidate continuation
+
+- Added opt-in `continuation: best_valid` for modernization runtimes. Reconstruct
+  the controller-selected candidate from verified cumulative proposals while
+  measuring the original source baseline on every attempt.
+- Preserve incremental/cumulative proposals and parent lineage; reject changed
+  source commits, invalid evidence, and inherited edits outside configured targets.

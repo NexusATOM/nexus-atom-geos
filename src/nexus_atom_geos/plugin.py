@@ -401,6 +401,17 @@ class GEOSPlugin(ModelPlugin):
             elif operation in {"optimize", "repair"}:
                 if operation == "repair" and self.config.workflow != "debug":
                     raise ValueError("Repair requires workflow: debug")
+                from .continuation import cumulative_proposal, seed_candidate
+
+                seed = None
+                if self.config.continuation == "best_valid":
+                    seed = seed_candidate(context, registry, evidence, self.config.targets)
+                lineage = {
+                    "policy": self.config.continuation,
+                    "parent_experiment": context.parent_experiment.id if seed else None,
+                    "baseline": "original configured source, remeasured in this attempt",
+                }
+                write_json(evidence / "continuation.json", lineage)
                 proposal_path = task.parameters.get("proposal") or self.config.proposal
                 if proposal_path:
                     proposal = PatchProposal.model_validate_json(Path(proposal_path).read_text())
@@ -446,6 +457,21 @@ class GEOSPlugin(ModelPlugin):
                             max_output_tokens=min(4096, context.remaining.max_tokens),
                             evidence={
                                 "files": files,
+                                "continuation": lineage,
+                                "parent_candidate_results": [
+                                    r.model_dump(mode="json")
+                                    for r in context.parent_experiment.results
+                                    if r.task_id
+                                    in {
+                                        t.id
+                                        for t in context.parent_experiment.tasks
+                                        if t.parameters.get("phase") == "candidate"
+                                        and t.capability
+                                        in {"geos.profile", "geos.benchmark", "geos.validate"}
+                                    }
+                                ]
+                                if seed
+                                else [],
                                 "previous_evaluations": task.parameters.get("feedback", []),
                                 "previous_task_results": task.parameters.get(
                                     "previous_task_results", []
@@ -475,11 +501,31 @@ class GEOSPlugin(ModelPlugin):
                         for change in proposal.changes
                     ):
                         raise ValueError("Repair cannot modify protected debug harness files")
+                proposal = proposal.model_copy(
+                    update={
+                        "changes": tuple(
+                            change.model_copy(
+                                update={
+                                    "repository": registry.get(change.repository).name,
+                                    "path": Path(change.path).as_posix(),
+                                }
+                            )
+                            for change in proposal.changes
+                        )
+                    }
+                )
+                combined = cumulative_proposal(seed, proposal)
                 trace = RunTrace(directory / "patches", kind=operation)
                 PatchManager(registry, trace).review(proposal, apply=True, require_clean=True)
                 outputs = {"summary": proposal.summary, "changes": len(proposal.changes)}
                 write_json(evidence / "proposal.json", proposal.model_dump(mode="json"))
+                write_json(evidence / "cumulative-proposal.json", combined.model_dump(mode="json"))
+                outputs["continuation"] = lineage
                 outputs["proposal_feedback"] = proposal_feedback(evidence / "proposal.json")
+                if seed:
+                    outputs["proposal_feedback"]["source_policy"] = (
+                        "Incremental proposal against the reconstructed parent candidate"
+                    )
                 import subprocess
 
                 for name, binding in registry.bindings.items():

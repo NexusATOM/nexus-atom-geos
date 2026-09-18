@@ -25,6 +25,7 @@ class DebugPolicy(Contract):
 class GEOSConfig(Contract):
     workflow: Literal["modernization", "regression", "debug"] = "modernization"
     debug: DebugPolicy | None = None
+    continuation: Literal["original", "best_valid"] = "original"
     workspace: Path
     repository: str
     backend: Literal["local", "slurm"] = "local"
@@ -60,6 +61,15 @@ class GEOSConfig(Contract):
             "candidate",
         }:
             raise ValueError("Unknown phase override")
+        if self.continuation == "best_valid" and (
+            self.workflow != "modernization"
+            or self.proposal
+            or not (self.runtime_argv or self.nooa_model)
+            or not self.targets
+        ):
+            raise ValueError(
+                "Best-valid continuation requires modernization with a proposal runtime"
+            )
         if self.workflow == "regression" and (self.runtime_argv or self.nooa_model):
             raise ValueError("Regression accepts prepared proposals, not model-generated changes")
         if self.workflow == "debug":

@@ -27,6 +27,7 @@ class DebugPolicy(Contract):
 class GEOSConfig(Contract):
     workflow: Literal['modernization', 'regression', 'debug'] = 'modernization'
     debug: DebugPolicy | None = None
+    continuation: Literal['original', 'best_valid'] = 'original'
     workspace: Path
     repository: str
     backend: Literal['local', 'slurm'] = 'local'
@@ -50,6 +51,34 @@ class GEOSConfig(Contract):
     targets: tuple[tuple[str, str], ...] = ()
     def configured(self): ...
     def from_file(cls, path: Path): ...
+```
+
+## `nexus_atom_geos.continuation`
+
+Reconstruct a promoted candidate from verified artifacts, never a mutable worktree.
+
+### `verified_json`
+
+[Source](../src/nexus_atom_geos/continuation.py#L12)
+
+```python
+def verified_json(experiment, directory, path): ...
+```
+
+### `seed_candidate`
+
+[Source](../src/nexus_atom_geos/continuation.py#L19)
+
+```python
+def seed_candidate(context, registry, evidence, targets): ...
+```
+
+### `cumulative_proposal`
+
+[Source](../src/nexus_atom_geos/continuation.py#L74)
+
+```python
+def cumulative_proposal(seed, proposal): ...
 ```
 
 ## `nexus_atom_geos.debugging`

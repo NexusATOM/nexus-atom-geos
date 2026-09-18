@@ -287,6 +287,15 @@
       ],
       "default": null
     },
+    "continuation": {
+      "default": "original",
+      "enum": [
+        "original",
+        "best_valid"
+      ],
+      "title": "Continuation",
+      "type": "string"
+    },
     "workspace": {
       "format": "path",
       "title": "Workspace",
