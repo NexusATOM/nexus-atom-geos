@@ -667,3 +667,507 @@ One other feature I'd prioritize very early: every run should produce a **trace 
 
 This is one of those cases where the hierarchical design isn't architecture for architecture's sake — GEOS itself already has the hierarchy you need to model.
 
+The useful version is not “a bunch of agents you can chat with.” It should behave like a **GEOS engineering system** that you give an actual task to, and it takes that task through investigation, modification, execution, validation, and reporting.
+
+For example, take a real task from your current GPU work:
+
+> “Investigate why the GPU implementation is only 1.76× faster than CPU and identify the next optimization.”
+
+You would run something like:
+
+```bash
+geos-agent work \
+  "Investigate why the GPU implementation is only 1.76x faster \
+   than CPU and implement the highest-impact safe optimization."
+```
+
+Then the framework does the engineering workflow.
+
+### 1. GEOSAgent understands the task
+
+It turns your request into a structured task:
+
+```text
+Goal:
+    Improve GPU performance
+
+Constraints:
+    - preserve CPU numerical equivalence
+    - one A100
+    - current GEOS configuration
+    - no scientific behavior changes
+
+Required evidence:
+    - CPU/GPU timings
+    - validation results
+    - git diff
+    - before/after performance
+```
+
+It then decides this needs:
+
+```text
+PerformanceAgent
+ArchitectureAgent
+CUDAAgent
+ValidationAgent
+```
+
+rather than loading every GEOS specialist.
+
+### 2. PerformanceAgent investigates the actual run
+
+This agent has real tools, not just an LLM prompt:
+
+```python
+class PerformanceAgent(Agent):
+
+    workspace: GEOSWorkspace
+    profiler: Profiler
+    slurm: Slurm
+
+    def run_benchmark(...):
+        ...
+
+    def profile(...):
+        ...
+
+    async def diagnose(
+        self,
+        profile: Profile
+    ) -> PerformanceDiagnosis:
+        ...
+```
+
+It could submit a Discover job, collect profiling information, inspect timers and return:
+
+```text
+FV dynamics                 210 s
+Physics                     184 s
+CPU pressure calculations    72 s
+H2D/D2H                      43 s
+Other                       92 s
+
+Likely optimization target:
+pressure logarithm/power routines
+```
+
+Now you're using agents for **actual HPC work**, not code generation.
+
+### 3. ArchitectureAgent traces the problem
+
+It searches across the GEOS repositories:
+
+```text
+pressure calculation
+       ↓
+GEOSgcm/foo.F90
+       ↓
+MAPL interface
+       ↓
+GEOSfvdycore/bar.F90
+       ↓
+CUDA wrapper
+```
+
+And determines:
+
+```text
+Repositories required:
+
+GEOSgcm
+GEOSfvdycore
+
+Files required:
+
+FV_StateMod.F90
+fv_dynamics.F90
+cuda_state.cpp
+...
+```
+
+Only those files/repositories enter the working context.
+
+### 4. CUDAAgent gets an isolated worktree
+
+The framework creates something like:
+
+```text
+.worktrees/
+   task-0042/
+       GEOSgcm/
+       GEOSfvdycore/
+```
+
+The CUDA specialist receives:
+
+```text
+TASK
+Move pressure log/power operations to GPU.
+
+CONSTRAINTS
+Do not alter algorithm.
+Preserve numerical equivalence.
+Do not introduce additional synchronization.
+
+FILES
+<relevant source>
+
+ARCHITECTURE FINDINGS
+<dependency/call graph>
+
+PERFORMANCE FINDINGS
+<profiling evidence>
+```
+
+Then it actually edits the source.
+
+### 5. BuildAgent builds it
+
+Not an LLM deciding how to compile GEOS.
+
+Deterministic code:
+
+```python
+result = build_agent.build(
+    configuration="held-suarez",
+    gpu=True
+)
+```
+
+If compilation fails:
+
+```text
+BuildAgent
+    ↓
+classifies failure
+    ↓
+CUDAAgent
+    ↓
+fix
+    ↓
+BuildAgent
+```
+
+Maybe maximum three repair iterations.
+
+### 6. ValidationAgent runs your real gates
+
+This is where the system becomes valuable for GEOS.
+
+You could encode the exact validation ladder you already use:
+
+```text
+                 Change
+                   │
+                   ▼
+                 Build
+                   │
+                   ▼
+              Unit/oracle
+                   │
+                   ▼
+               Sanitizers
+                   │
+                   ▼
+                  C24
+                   │
+                   ▼
+                  C96
+                   │
+                   ▼
+                 C180
+                   │
+                   ▼
+                 C384
+                   │
+                   ▼
+                 C576
+```
+
+If C96 fails:
+
+```text
+ValidationAgent:
+    CPU/GPU divergence begins at timestep 37.
+
+    Variable:
+        PT
+
+    Max difference:
+        3.8e-7
+
+    First affected routine:
+        pressure_to_temperature()
+```
+
+That evidence goes back to the CUDA agent.
+
+The agent doesn't simply say:
+
+> Looks good.
+
+It cannot declare success until your deterministic validation policy passes.
+
+### 7. PerformanceAgent benchmarks the resulting change
+
+Suppose it gets:
+
+```text
+BEFORE
+
+CPU       994.22 s
+GPU       601.59 s
+Speedup     1.65×
+
+AFTER
+
+CPU       994.31 s
+GPU       521.84 s
+Speedup     1.91×
+```
+
+Now it has evidence that the change helped.
+
+### 8. GEOSAgent gives you an engineering report
+
+Your terminal could end with:
+
+```text
+GEOS Agent Task #42
+────────────────────────────────────
+
+Task
+Improve GPU performance.
+
+Status
+SUCCESS
+
+Repositories modified
+GEOSfvdycore
+GEOSgcm
+
+Changes
+Moved pressure logarithm/power operations
+from CPU state boundary to GPU.
+
+Validation
+✓ build
+✓ 864 oracle cases
+✓ ASAN
+✓ CUDA sanitizer
+✓ C24
+✓ C96
+✓ C180
+✓ C384
+✓ C576
+
+Numerical equivalence
+PASS
+
+Performance
+
+                 Before       After
+CPU              994.22 s     994.31 s
+GPU              601.59 s     521.84 s
+Speedup            1.65×        1.91×
+
+GPU improvement
+13.3%
+
+Commits
+GEOSgcm:       a13fe91
+GEOSfvdycore:  4ca912e
+
+Artifacts
+profile-before/
+profile-after/
+validation/
+diff.patch
+task-report.json
+```
+
+**That is the product I would build.**
+
+---
+
+## It shouldn't only be for GPU work
+
+Once you have this infrastructure, the same system can do several kinds of real GEOS engineering:
+
+```bash
+geos-agent fix \
+  "C384 crashes after timestep 184 with this configuration"
+```
+
+The agents reproduce → trace → isolate → patch → build → validate.
+
+```bash
+geos-agent investigate \
+  "Why does changing this MAPL field break GEOSgcm?"
+```
+
+ArchitectureAgent traces repository boundaries, interfaces and dependencies.
+
+```bash
+geos-agent explain \
+  "Trace U and V from FV3 dynamics through the GEOS atmosphere"
+```
+
+It produces the call/data-flow path with actual source references.
+
+```bash
+geos-agent optimize \
+  "Find unnecessary CPU-GPU transfers in FV dynamics"
+```
+
+Profiler → architecture → CUDA → validation → benchmark.
+
+```bash
+geos-agent upgrade \
+  "Update this dependency and determine what breaks"
+```
+
+Dependency → build → repository specialists → validation.
+
+And eventually:
+
+```bash
+geos-agent review <PR>
+```
+
+could understand GEOS-specific implications rather than performing a generic code review.
+
+---
+
+## Where the main/subagent idea becomes powerful
+
+Imagine someone gives it:
+
+> “GPU accelerate FV3.”
+
+That's too large for a coding agent.
+
+Your system can recursively decompose it:
+
+```text
+GEOSAgent
+│
+├─ ArchitectureAgent
+│    └─ map FV3 execution
+│
+├─ PerformanceAgent
+│    └─ establish baseline/profile
+│
+└─ ModernizationAgent
+     │
+     ├─ Task 1: wind interpolation
+     │    ├─ CUDAAgent
+     │    └─ ValidationAgent
+     │
+     ├─ Task 2: thermodynamics
+     │    ├─ CUDAAgent
+     │    └─ ValidationAgent
+     │
+     ├─ Task 3: pressure calculations
+     │    ├─ CUDAAgent
+     │    └─ ValidationAgent
+     │
+     └─ Task 4: D-grid
+          ├─ CUDAAgent
+          └─ ValidationAgent
+```
+
+The **main agent owns the objective**.
+
+The **subagents own bounded engineering problems**.
+
+The **workflows enforce the scientific/software process**.
+
+---
+
+## The missing abstraction is `GEOSWorkspace`
+
+I'd actually make this the center of the implementation:
+
+```python
+class GEOSWorkspace:
+    repos: RepositoryRegistry
+    scheduler: SlurmClient
+    build: GEOSBuildSystem
+    validation: ValidationSystem
+    profiler: Profiler
+    artifacts: ArtifactStore
+```
+
+Then every agent receives the same controlled view of the real environment:
+
+```python
+class CUDAAgent(Agent):
+
+    workspace: GEOSWorkspace
+
+    async def optimize(
+        self,
+        task: OptimizationTask
+    ) -> Patch:
+        ...
+```
+
+That makes the agents capable of **doing things** rather than merely answering questions.
+
+And it gives you an important safety boundary: agents don't automatically get arbitrary shell access. They receive controlled capabilities such as:
+
+```python
+workspace.search(...)
+workspace.read(...)
+workspace.patch(...)
+workspace.build(...)
+workspace.submit_job(...)
+workspace.get_job(...)
+workspace.validate(...)
+workspace.benchmark(...)
+workspace.git_diff(...)
+```
+
+You can decide which agents are allowed to call which operations.
+
+---
+
+## Your first MVP could be surprisingly small
+
+I wouldn't start by implementing the entire grand architecture.
+
+Start with one command:
+
+```bash
+geos-agent work "..."
+```
+
+and six components:
+
+```text
+GEOSAgent
+    │
+    ├── ArchitectureAgent
+    ├── CodingAgent
+    │      └── CUDA/Fortran expertise
+    ├── BuildAgent
+    ├── ValidationAgent
+    └── PerformanceAgent
+```
+
+Give them access to three repositories initially:
+
+```text
+GEOSgcm
+GEOSfvdycore
+MAPL
+```
+
+And support one end-to-end workflow:
+
+**Investigate → modify → build → validate → benchmark → report.**
+
+If that can autonomously take one of the CUDA optimization tasks you've been doing and reliably move it from issue description to a validated patch, you have demonstrated something substantially more useful than another agent framework. It becomes a **GEOS-aware autonomous software engineering environment**.
+
