@@ -37,10 +37,17 @@ as an evidence-driven Python library and CLI. NVIDIA's package is named **NOOA**
 | --- | --- |
 | `v0.1.0a1` | Typed core, GEOS catalog, mepo import, bounded repository context |
 | `v0.1.0a2` | NOOA delegation, task workflows, CLI, reproducible offline example |
-| `v0.1.0` | Execution and validation tools, patch lifecycle, CI, documentation, release checks |
+| `v0.1.0a3` | Isolated end-to-end work, command/patch lifecycle, numerical and benchmark gates |
+| `v0.1.0` | Reproducible installation, runnable demos, CI, documentation, release checks |
 
-The first release supports investigation, explanation, GPU-port planning and
-reviewable implementation proposals. Production GEOS runs require a configured
+The first release supports investigation, explanation, GPU-port planning,
+reviewable implementation proposals, and an opt-in end-to-end engineering workflow
+through `GEOSWorkspace`. The latter runs in detached Git worktrees, preserves mepo
+placement, establishes a baseline, applies changes, runs configured gates, compares
+fresh numerical artifacts, measures candidate performance, and writes a report.
+Configured failed gates cannot be overridden by a model. Bounded repairs are
+limited to the original proposal's files and use fresh content digests.
+Production GEOS runs require a configured
 HPC environment, data, compiler/MPI stack, and site-specific commands. Automatic
 Slurm submission, a complete Fortran call graph, full Earth-system scientific
 certification, and unattended multi-repository merges are future extensions.

@@ -72,6 +72,7 @@ class GitState(Contract):
     commit: str | None = None
     branch: str | None = None
     dirty: bool | None = None
+    worktree_sha256: str | None = None
 
 
 class Evidence(Contract):

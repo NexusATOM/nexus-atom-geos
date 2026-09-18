@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+from importlib.metadata import version
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from geos_agents import __version__
 from geos_agents.context import ContextLoader, confined_file
 from geos_agents.models import (
     Assessment,
@@ -87,7 +89,21 @@ class WorkflowRunner:
             "workflow", workflow=task.workflow.value, mode="nooa" if llm else "offline"
         ):
             trace.artifact("task.json", task)
+            trace.emit(
+                "runtime.configured",
+                package_version=__version__,
+                nooa_version=version("nooa") if llm else None,
+                model=getattr(llm, "model", None),
+                call_timeout=self.call_timeout,
+            )
             names = self.registry.select(task)
+            patch_inputs = (
+                self._patch_inputs(names)
+                if task.workflow == Workflow.IMPLEMENT and self.targets
+                else None
+            )
+            if llm and task.workflow == Workflow.IMPLEMENT and not patch_inputs:
+                raise ValueError("implementation requires explicit --file REPOSITORY:path targets")
             trace.emit(
                 "repositories.selected",
                 repositories=list(names),
@@ -159,11 +175,7 @@ class WorkflowRunner:
                     "ValidationAgent", ValidationAgent(llm=llm).review, task, contexts, plan
                 )
                 if task.workflow == Workflow.IMPLEMENT:
-                    if not self.targets:
-                        raise ValueError(
-                            "implementation requires explicit --file REPOSITORY:path targets"
-                        )
-                    files = self._patch_inputs(names)
+                    files = patch_inputs
                     proposal = await invoke(
                         "RepositoryAgent:propose", RepositoryAgent(llm=llm).propose, task, files
                     )

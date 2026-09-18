@@ -72,10 +72,26 @@ def git_state(root: Path) -> GitState:
         return result.stdout.strip()
 
     try:
+        status = git("status", "--porcelain", "--untracked-files=normal")
+        fingerprint = hashlib.sha256()
+        fingerprint.update(
+            git("diff", "--no-ext-diff", "--no-textconv", "--binary", "HEAD", "--").encode()
+        )
+        # Include new proposal files, not merely their 'untracked' status.
+        untracked = git("ls-files", "--others", "--exclude-standard", "-z")
+        for relative in sorted(filter(None, untracked.split("\x00"))):
+            path = root / relative
+            fingerprint.update(relative.encode())
+            if path.is_symlink():
+                fingerprint.update(os.readlink(path).encode())
+            elif path.is_file():
+                with path.open("rb") as stream:
+                    fingerprint.update(hashlib.file_digest(stream, "sha256").digest())
         return GitState(
             commit=git("rev-parse", "HEAD"),
             branch=git("rev-parse", "--abbrev-ref", "HEAD"),
-            dirty=bool(git("status", "--porcelain", "--untracked-files=normal")),
+            dirty=bool(status),
+            worktree_sha256=fingerprint.hexdigest(),
         )
     except (OSError, subprocess.SubprocessError):
         return GitState()

@@ -25,7 +25,7 @@ class RepositoryAgent(Agent):
     Never claim to have executed code, measured performance or validated science.
     """
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
     async def investigate(self, task: GEOSTask, context: RepositoryContext) -> Assessment:
         """Analyze the task within this repository's supplied source context.
 
@@ -35,7 +35,7 @@ class RepositoryAgent(Agent):
         """
         ...
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=16384)))
     async def propose(self, task: GEOSTask, files: list[dict[str, str | None]]) -> PatchProposal:
         """Propose a minimal implementation using complete supplied file contents.
 
@@ -52,7 +52,7 @@ class RepositoryAgent(Agent):
 class ArchitectureAgent(Agent):
     """GEOS architecture specialist for a federation of repositories, not a flat tree."""
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
     async def synthesize(
         self,
         task: GEOSTask,
@@ -73,7 +73,7 @@ class ArchitectureAgent(Agent):
 class CUDAAgent(Agent):
     """GPU modernization specialist: numerics, halos, data movement and synchronization."""
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
     async def plan(self, task: GEOSTask, contexts: tuple[RepositoryContext, ...]) -> Assessment:
         """Plan a GEOS GPU port; cite evidence and identify all unknowns explicitly.
 
@@ -90,7 +90,7 @@ class CUDAAgent(Agent):
 class ValidationAgent(Agent):
     """Separate software equivalence from Earth-system scientific validity."""
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
     async def review(
         self, task: GEOSTask, contexts: tuple[RepositoryContext, ...], plan: ValidationPlan
     ) -> Assessment:
@@ -108,7 +108,7 @@ class ValidationAgent(Agent):
 class PerformanceAgent(Agent):
     """Performance specialist requiring comparable measured trials."""
 
-    @strategy(PredictStrategy(config=PredictConfig(max_retries=2)))
+    @strategy(PredictStrategy(config=PredictConfig(max_retries=2, max_tokens=4096)))
     async def plan(self, task: GEOSTask, contexts: tuple[RepositoryContext, ...]) -> Assessment:
         """Plan profiling and measurement; cite only supplied evidence IDs.
 

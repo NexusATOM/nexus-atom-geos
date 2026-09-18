@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0a3 — 2026-09-18
+
+- Add GEOSWorkspace and the integrated `work` engineering lifecycle in detached worktrees.
+- Enforce baseline/candidate build and validation gates, fresh numerical artifacts,
+  repeated benchmarks, optional speedup thresholds and up to three model repairs.
+- Add dry-run-first named command execution with process-group timeouts and output limits.
+- Add digest-guarded patch review/application, preflight checks, backups and rollback.
+- Compare finite field values with explicit units, shapes, tolerances, binary64
+  bitwise checks and optional unweighted conservation checks.
+- Produce machine-readable and Markdown engineering reports with source and measurement provenance.
+- Test the lifecycle against real temporary Git worktrees and real subprocesses.
+
 ## 0.1.0a2 — 2026-09-18
 
 - Compose six real NOOA agents using typed PredictStrategy methods.
