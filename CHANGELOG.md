@@ -33,3 +33,11 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
 - Added failure reproduction, recorded diagnostics, prepared/runtime repairs,
   protected harness files, and hash-verified trusted-reference acceptance.
 - Added a runnable synthetic debugging example and negative repair tests.
+
+### Proposal feedback
+
+- Preserve bounded prior proposal content, complete artifact hashes and byte
+  counts in task results so subsequent runtime attempts can interpret failures
+  against the actual attempted changes.
+- Document replacement proposals against original source and the absence of
+  implicit candidate accumulation.

@@ -241,3 +241,26 @@ no provider, and retains the original source. It demonstrates orchestration,
 not real GEOS debugging or scientific validation. Inspect the recorded goal and
 experiment with the Controller commands in its usage guide; resuming a completed
 goal reuses the saved results.
+
+
+## Replanning from prior changes
+
+Successful `optimize` and `repair` tasks record `proposal_feedback` in their
+outputs. It includes the exact proposal JSON when it fits within 64 KiB, otherwise
+an explicitly truncated head/tail excerpt. The full proposal remains at
+`evidence/proposal.json` in the originating experiment; the feedback records its
+SHA-256 and byte count. Truncated text is context, not a complete JSON document.
+
+The default plugin planner carries the latest attempt's task results to the next
+runtime invocation, including this patch context alongside compiler errors,
+measurements and evaluations. Controller history and checkpoints preserve the
+same feedback across resume. Source and proposal text are untrusted evidence,
+not instructions or permission to relax acceptance checks.
+
+Each trial still starts from the original configured source. Generate a complete
+replacement proposal against the current supplied file hashes; do not return an
+incremental patch against a prior candidate. A valid candidate below the goal
+may inform a new proposal, but `best_valid_candidate` does not automatically
+change the source checkout. Explicit accumulation/rebasing is not implemented.
+Proposals rejected before successful patch application do not produce this
+feedback record; task failure details remain available.

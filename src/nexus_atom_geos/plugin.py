@@ -62,6 +62,19 @@ def log_excerpt(path: Path, limit: int = 8192) -> dict:
     }
 
 
+def proposal_feedback(path: Path) -> dict:
+    """Bound model context while identifying the complete sealed proposal artifact."""
+    excerpt = log_excerpt(path, limit=65536)
+    with path.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    return {
+        **excerpt,
+        "sha256": digest,
+        "artifact": "evidence/proposal.json",
+        "source_policy": "Replacement proposal against the original configured source; no implicit accumulation",
+    }
+
+
 class GEOSCapability(Capability):
     def __init__(self, plugin, operation):
         self.plugin, self.operation = plugin, operation
@@ -466,6 +479,7 @@ class GEOSPlugin(ModelPlugin):
                 PatchManager(registry, trace).review(proposal, apply=True, require_clean=True)
                 outputs = {"summary": proposal.summary, "changes": len(proposal.changes)}
                 write_json(evidence / "proposal.json", proposal.model_dump(mode="json"))
+                outputs["proposal_feedback"] = proposal_feedback(evidence / "proposal.json")
                 import subprocess
 
                 for name, binding in registry.bindings.items():

@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 
@@ -6,7 +7,7 @@ from nexus_atom_controller import Controller, Store
 from nexus_atom_controller.discovery import PluginPlanner
 from nexus_atom_core import Budget, CapabilityRegistry, Goal
 
-from nexus_atom_geos.plugin import GEOSPlugin, log_excerpt
+from nexus_atom_geos.plugin import GEOSPlugin, log_excerpt, proposal_feedback
 
 
 def test_log_excerpt_keeps_bounded_head_and_tail(tmp_path):
@@ -35,6 +36,9 @@ previous=evidence["previous_task_results"]
 if previous:
     failed=[result for result in previous if result["status"] == "failed"]
     assert failed
+    prior=next(r["outputs"]["proposal_feedback"] for r in previous if "proposal_feedback" in r["outputs"])
+    assert not prior["truncated"]
+    assert json.loads(prior["text"])["changes"][0]["content"].startswith("def compute(:")
     assert "SyntaxError" in failed[0]["outputs"]["stderr"]["text"]
     content="def compute():\\n    return float(99999 * 100000 // 2)\\n"
 else:
@@ -73,4 +77,21 @@ print(json.dumps({"proposal":proposal,"rationale":"test evidence"}))
     failed = next(r for r in history[0].results if r.status == "failed")
     assert "SyntaxError" in failed.outputs["stderr"]["text"]
     assert "for i in range" in (tmp_path / "demo/baseline/kernel.py").read_text()
+    proposed = next(r for r in history[0].results if "proposal_feedback" in r.outputs)
+    record = proposed.outputs["proposal_feedback"]
+    raw = (store.directory(history[0].id) / record["artifact"]).read_bytes()
+    assert record["sha256"] == hashlib.sha256(raw).hexdigest()
+    assert json.loads(record["text"]) == json.loads(raw)
+    assert all(a.verify(store.directory(e.id)) for e in history for a in e.artifacts)
     store.close()
+
+
+def test_large_proposal_feedback_is_bounded_and_identifies_complete_artifact(tmp_path):
+    path = tmp_path / "proposal.json"
+    raw = json.dumps({"changes": [{"content": "x" * 200000}]}).encode()
+    path.write_bytes(raw)
+    record = proposal_feedback(path)
+    assert record["truncated"] and record["bytes"] == len(raw)
+    assert len(record["text"].encode()) < 65700
+    assert record["sha256"] == hashlib.sha256(raw).hexdigest()
+    assert path.read_bytes() == raw

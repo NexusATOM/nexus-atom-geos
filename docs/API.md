@@ -207,9 +207,19 @@ Bound prompt material while retaining both initial context and final errors.
 def log_excerpt(path: Path, limit: int=8192) -> dict: ...
 ```
 
-### `GEOSCapability`
+### `proposal_feedback`
 
 [Source](../src/nexus_atom_geos/plugin.py#L65)
+
+Bound model context while identifying the complete sealed proposal artifact.
+
+```python
+def proposal_feedback(path: Path) -> dict: ...
+```
+
+### `GEOSCapability`
+
+[Source](../src/nexus_atom_geos/plugin.py#L78)
 
 ```python
 class GEOSCapability(Capability):
@@ -219,7 +229,7 @@ class GEOSCapability(Capability):
 
 ### `GEOSEvaluator`
 
-[Source](../src/nexus_atom_geos/plugin.py#L75)
+[Source](../src/nexus_atom_geos/plugin.py#L88)
 
 ```python
 class GEOSEvaluator(Evaluator):
@@ -229,7 +239,7 @@ class GEOSEvaluator(Evaluator):
 
 ### `GEOSPlugin`
 
-[Source](../src/nexus_atom_geos/plugin.py#L158)
+[Source](../src/nexus_atom_geos/plugin.py#L171)
 
 ```python
 class GEOSPlugin(ModelPlugin):
