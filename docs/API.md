@@ -10,6 +10,7 @@ Public definitions below are generated from the shipped source. See USAGE.md and
 
 ```python
 class GEOSConfig(Contract):
+    workflow: Literal['modernization', 'regression'] = 'modernization'
     workspace: Path
     repository: str
     backend: Literal['local', 'slurm'] = 'local'
@@ -26,7 +27,7 @@ class GEOSConfig(Contract):
     science: ValidationSuite
     repeats: int = Field(default=5, ge=3, le=100)
     warmups: int = Field(default=1, ge=0, le=20)
-    benchmark_identity: dict[str, str] = Field(min_length=1)
+    benchmark_identity: dict[str, str] = Field(default_factory=dict)
     proposal: Path | None = None
     runtime_argv: tuple[str, ...] | None = None
     nooa_model: str | None = None
@@ -186,15 +187,17 @@ def modernization_plan(*, proposal: str | None=None, software_checks: tuple[str,
 
 ### `regression_plan`
 
-[Source](../src/nexus_atom_geos/workflows.py#L47)
+[Source](../src/nexus_atom_geos/workflows.py#L51)
+
+Check a prepared candidate, or compare repeated runs without source edits.
 
 ```python
-def regression_plan() -> Plan: ...
+def regression_plan(*, proposal: str | None=None, software_checks: tuple[str, ...]=(), hypothesis: str='Compare baseline and candidate GEOS outputs under fixed acceptance criteria') -> Plan: ...
 ```
 
 ### `debug_plan`
 
-[Source](../src/nexus_atom_geos/workflows.py#L75)
+[Source](../src/nexus_atom_geos/workflows.py#L85)
 
 ```python
 def debug_plan(): ...

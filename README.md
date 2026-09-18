@@ -57,3 +57,6 @@ Apache-2.0. This is an independent implementation for model orchestration, not a
 - [Changes](CHANGELOG.md)
 
 Configured `software_checks: [test, sanitize]` add required baseline/candidate check stages and separate acceptance evidence. See [required tests and sanitizers](docs/USAGE.md#required-software-tests-and-sanitizers); the default empty list makes no test/sanitizer coverage claim.
+
+Use `workflow: regression` for baseline/candidate software and scientific comparisons
+without performance stages. See [regression usage](docs/USAGE.md#regression-checks-without-an-optimization-objective).

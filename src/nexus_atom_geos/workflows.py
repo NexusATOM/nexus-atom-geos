@@ -27,6 +27,10 @@ def modernization_plan(
         ("validate", "candidate"),
         ("diagnose", "candidate"),
     ]
+    return _sequential_plan(operations, proposal, hypothesis)
+
+
+def _sequential_plan(operations, proposal, hypothesis):
     tasks = []
     for index, (operation, phase) in enumerate(operations):
         parameters = {"phase": phase}
@@ -44,28 +48,34 @@ def modernization_plan(
     return Plan(hypothesis=hypothesis, graph=TaskGraph(tasks=tuple(tasks)))
 
 
-def regression_plan() -> Plan:
-    # A no-change proposal is intentionally not substituted for regression evidence.
-    return Plan(
-        hypothesis="Build and run the configured GEOS baseline",
-        graph=TaskGraph(
-            tasks=(
-                Task(id="inspect", capability="geos.inspect"),
-                Task(
-                    id="build",
-                    capability="geos.build",
-                    parameters={"phase": "baseline"},
-                    depends_on=("inspect",),
-                ),
-                Task(
-                    id="run",
-                    capability="geos.run",
-                    parameters={"phase": "baseline"},
-                    depends_on=("build",),
-                ),
-            )
-        ),
+def regression_plan(
+    *,
+    proposal: str | None = None,
+    software_checks: tuple[str, ...] = (),
+    hypothesis: str = "Compare baseline and candidate GEOS outputs under fixed acceptance criteria",
+) -> Plan:
+    """Check a prepared candidate, or compare repeated runs without source edits."""
+    if set(software_checks) - {"test", "sanitize"} or len(set(software_checks)) != len(
+        software_checks
+    ):
+        raise ValueError("Software checks must be unique test/sanitize operations")
+    operations = [
+        ("inspect", "baseline"),
+        ("build", "baseline"),
+        *((check, "baseline") for check in software_checks),
+        ("run", "baseline"),
+    ]
+    if proposal:
+        operations.append(("optimize", "candidate"))
+    operations.extend(
+        [
+            ("build", "candidate"),
+            *((check, "candidate") for check in software_checks),
+            ("run", "candidate"),
+            ("validate", "candidate"),
+        ]
     )
+    return _sequential_plan(operations, proposal, hypothesis)
 
 
 gpu_port_plan = modernization_plan
@@ -73,4 +83,6 @@ optimize_plan = modernization_plan
 
 
 def debug_plan():
-    return regression_plan()
+    raise NotImplementedError(
+        "Debugging requires an explicit failure-reproduction and repair policy"
+    )

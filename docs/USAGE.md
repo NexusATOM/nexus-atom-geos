@@ -17,12 +17,13 @@ Start with the [small model-independent example](https://github.com/NexusATOM/ne
 | `geos.validate` | Compare baseline/candidate numerics and configured scientific diagnostics |
 | `geos.diagnose` | Persist configured numerical/scientific diagnostic results |
 
-`modernization_plan`/`gpu_port_plan`/`optimize_plan` build the full baseline/candidate sequence. `regression_plan` and `debug_plan` currently build/run the baseline; they are building blocks requiring appropriate goal evaluators, not full autonomous debugging systems.
+`modernization_plan`/`gpu_port_plan`/`optimize_plan` build the full baseline/candidate sequence. `regression_plan` executes and compares baseline/candidate runs without performance stages; select `workflow: regression` in configuration. `debug_plan` now explicitly raises `NotImplementedError` because a failure-reproduction/repair workflow is not yet implemented.
 
 ## Site configuration fields
 
 | Field | Meaning |
 |---|---|
+| `workflow` | `modernization` (default) or `regression` |
 | `workspace` | YAML federation bindings; relative to the config file |
 | `repository` | Bound repository in which site commands run |
 | `backend` | `local` or `slurm` |
@@ -32,7 +33,7 @@ Start with the [small model-independent example](https://github.com/NexusATOM/ne
 | `dataset` | Repository-relative fresh scientific output file |
 | `benchmark_seconds_file` | Repository-relative JSON file containing positive finite `seconds`; required for Slurm |
 | `repeats`, `warmups` | Measured trials (3–100) and warmups (0–20) |
-| `benchmark_identity` | Explicit workload/environment identity for comparable runs |
+| `benchmark_identity` | Required when benchmarking: explicit workload/environment identity for comparable runs |
 | `tolerance` | Absolute/relative or bitwise numerical policy |
 | `science` | Nonempty suite of explicitly approved diagnostic thresholds |
 | `proposal` | Prepared PatchProposal JSON path; relative to config |
@@ -43,7 +44,7 @@ A prepared proposal takes precedence over live generation. Remove it when enabli
 
 ## Validation and boundaries
 
-Required evaluators are `geos.software`, `geos.numerical`, `geos.science` and `geos.performance`. Software checks configured command success. Numerical/science checks read fresh captured datasets. Performance computes median baseline/candidate timing ratio from repeated samples and requires matching declared identity. Proper hardware/input/measurement control remains part of the site setup.
+Modernization requires evaluators `geos.software`, `geos.numerical`, `geos.science` and `geos.performance`. Software checks configured command success. Numerical/science checks read fresh captured datasets. Performance computes median baseline/candidate timing ratio from repeated samples and requires matching declared identity. Proper hardware/input/measurement control remains part of the site setup.
 
 A wrong candidate is never promoted merely for being fast. Passing configured diagnostics is not a universal GEOS science certificate. Promotion records a best-candidate pointer and retains source/worktrees; it does not merge upstream branches.
 
@@ -152,3 +153,36 @@ explicitly before providing it. Missing fields or incompatible data fail the
 task. Profiles use available coordinates; two-dimensional plots show grid
 indices, not geographic projections. The manifest preserves the original field
 names while filenames use safe ordinal identifiers.
+
+## Regression checks without an optimization objective
+
+Set `workflow: regression` in the GEOS configuration. The default plugin planner
+then executes inspect → baseline build/checks/run → optional prepared patch →
+candidate build/checks/run → numerical/scientific validation. Configured
+`software_checks` remain mandatory in both phases. Plots and sealed reports work
+as in modernization. No benchmark, profiler, or speedup acceptance is implied.
+
+Provide `proposal` to compare a prepared source change against the baseline.
+Without a proposal, both phases use unchanged source; this checks repeated-run
+behavior (or explicit phase-command configurations), not a new source version.
+Commands still need to recreate the relevant build/run conditions. The framework
+does not infer a compiler matrix, restart protocol, or clean-build policy.
+
+Only build/run and configured test/sanitizer commands are required for this
+workflow. Benchmark identity, profiler commands and Slurm timing output are
+required only if benchmarking is actually used. Regression rejects configured
+proposal runtimes and speedup targets rather than silently generating edits or
+claiming an unmeasured performance result. It runs one recorded comparison;
+completed resume returns the recorded state without repeating the candidate.
+
+```bash
+atom run --system geos --config regression.yaml --state .atom/regression \
+  'Check the prepared change against the reference outputs'
+```
+
+`regression.yaml` uses the same workspace, dataset, tolerance and scientific suite
+fields as modernization, with `workflow: regression`. The required evaluators
+are software, numerical and science, plus separately configured test/sanitizer
+gates. The baseline itself must satisfy the configured software checks. Diagnosing
+or repairing a failing baseline belongs to a separate debug workflow, which is
+still incomplete; a failed baseline must not be accepted as regression success.

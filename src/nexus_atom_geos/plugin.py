@@ -104,7 +104,7 @@ class GEOSEvaluator(Evaluator):
                 json.loads((evidence / f"{phase}-benchmark.json").read_text())
                 for phase in ("baseline", "candidate")
             ]
-            if a["identity"] != b["identity"]:
+            if not a["identity"] or a["identity"] != b["identity"]:
                 raise ValueError("Benchmark environments differ")
             if min(*a["samples"], *b["samples"]) <= 0:
                 raise ValueError("Positive measured timings required")
@@ -253,6 +253,10 @@ class GEOSPlugin(ModelPlugin):
                     data = load_dataset(confined_file(root, self.config.dataset))
                     write_json(evidence / f"{phase}-fields.json", data.model_dump(mode="json"))
             elif operation == "benchmark":
+                if not self.config.benchmark_identity:
+                    raise ValueError("Benchmarking requires an explicit environment identity")
+                if self.config.backend == "slurm" and not self.config.benchmark_seconds_file:
+                    raise ValueError("Slurm benchmarking requires application timing")
                 samples = []
                 gpu_seconds = 0
                 for index in range(self.config.warmups + self.config.repeats):
@@ -440,14 +444,27 @@ class GEOSPlugin(ModelPlugin):
     def goal_constraints(self):
         checks = self.config.software_checks if self.config else ()
         additional = tuple("tests" if check == "test" else "sanitizers" for check in checks)
+        performance = (
+            () if self.config and self.config.workflow == "regression" else ("performance",)
+        )
         return tuple(
             f"geos.{name}"
-            for name in ("software", *additional, "numerical", "science", "performance")
+            for name in ("software", *additional, "numerical", "science", *performance)
         )
 
     async def plan(self, goal, history, registry):
-        from .workflows import modernization_plan
+        from .workflows import modernization_plan, regression_plan
 
+        if self.config.workflow == "regression":
+            if "speedup" in goal.target:
+                raise ValueError("Regression does not measure speedup; select modernization")
+            if history:
+                return None
+            return regression_plan(
+                proposal=str(self.config.proposal) if self.config.proposal else None,
+                software_checks=self.config.software_checks,
+                hypothesis=goal.objective,
+            )
         if history and self.config.proposal:
             return None
         feedback = ""

@@ -23,3 +23,7 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
 - Add optional, bounded repository/objective specialist profiles with deterministic
   selection, scoped citation checks, and session-persisted configuration. Include
   profile examples, a scripted NOOA demonstration, and an evaluation/input guide.
+- Replace the baseline-only regression skeleton with configured baseline/candidate
+  comparisons, prepared-patch or repeated-source modes, and non-performance gates.
+  Reject live proposal generation/speedup targets in regression. The unfinished
+  debug helper now fails explicitly instead of presenting regression as debugging.

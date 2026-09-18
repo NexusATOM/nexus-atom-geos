@@ -204,6 +204,15 @@
   },
   "additionalProperties": false,
   "properties": {
+    "workflow": {
+      "default": "modernization",
+      "enum": [
+        "modernization",
+        "regression"
+      ],
+      "title": "Workflow",
+      "type": "string"
+    },
     "workspace": {
       "format": "path",
       "title": "Workspace",
@@ -319,7 +328,6 @@
       "additionalProperties": {
         "type": "string"
       },
-      "minProperties": 1,
       "title": "Benchmark Identity",
       "type": "object"
     },
@@ -386,8 +394,7 @@
     "workspace",
     "repository",
     "commands",
-    "science",
-    "benchmark_identity"
+    "science"
   ],
   "title": "GEOSConfig",
   "type": "object"
