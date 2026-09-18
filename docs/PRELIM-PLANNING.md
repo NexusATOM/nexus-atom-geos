@@ -1171,3 +1171,598 @@ And support one end-to-end workflow:
 
 If that can autonomously take one of the CUDA optimization tasks you've been doing and reliably move it from issue description to a validated patch, you have demonstrated something substantially more useful than another agent framework. It becomes a **GEOS-aware autonomous software engineering environment**.
 
+Yes. Conceptually, it could feel **a lot like Codex**, but I would make the state model more explicit because you have multiple specialized agents and multiple GEOS repositories.
+
+Codex already has several analogous ideas: resumable sessions, subagents for delegated work, repository instructions through `AGENTS.md`, and compaction for long-running trajectories. ([OpenAI Developers][1]) The newer agent APIs also explicitly represent sessions, subagents, turns, items, artifacts, and persistent execution environments. ([OpenAI Developers][2])
+
+For GEOS, I would separate **conversation state from engineering state**.
+
+### The central idea: one `GEOSSession`
+
+When you start:
+
+```bash
+geos-agent
+```
+
+you create:
+
+```text
+GEOSSession #8f32
+│
+├── Objective
+│   "Improve GEOS GPU performance"
+│
+├── Workspace
+│   ├── GEOSgcm @ cuda-dev
+│   ├── GEOSfvdycore @ cuda-dev
+│   └── MAPL @ develop
+│
+├── Task state
+│   ├── active task
+│   ├── completed tasks
+│   ├── hypotheses
+│   └── decisions
+│
+├── Evidence
+│   ├── benchmarks
+│   ├── profiles
+│   ├── validation results
+│   └── build logs
+│
+├── Changes
+│   ├── commits
+│   ├── patches
+│   └── worktrees
+│
+└── Agents
+    ├── ArchitectureAgent
+    ├── CUDAAgent
+    ├── PerformanceAgent
+    └── ValidationAgent
+```
+
+That `GEOSSession` is the **source of truth**.
+
+The individual agents should *not* be the source of truth.
+
+---
+
+## Don't make agents share their chat histories
+
+This is the architecture I would avoid:
+
+```text
+CUDAAgent conversation
+        ↓
+copy conversation
+        ↓
+ValidationAgent conversation
+        ↓
+copy conversation
+        ↓
+PerformanceAgent conversation
+```
+
+After 20 iterations, you're passing enormous amounts of stale context around.
+
+Instead:
+
+```text
+                 GEOSSession
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+   CUDAAgent    ValidationAgent PerformanceAgent
+       │             │             │
+       └─────────────┼─────────────┘
+                     ▼
+                 GEOSSession
+```
+
+Agents **read state and write results**.
+
+---
+
+# Think of it as a shared blackboard
+
+For example, your session might contain:
+
+```python
+class GEOSSessionState(BaseModel):
+
+    objective: str
+
+    repositories: dict[str, RepositoryState]
+
+    current_plan: Plan
+
+    tasks: list[Task]
+
+    findings: list[Finding]
+
+    decisions: list[Decision]
+
+    changes: list[CodeChange]
+
+    builds: list[BuildResult]
+
+    validations: list[ValidationResult]
+
+    benchmarks: list[BenchmarkResult]
+
+    artifacts: list[Artifact]
+```
+
+Now suppose `PerformanceAgent` discovers:
+
+```text
+Pressure log calculations remain on CPU.
+
+Cost:
+72 seconds
+
+Files:
+GEOSgcm/...
+GEOSfvdycore/...
+```
+
+It writes:
+
+```python
+Finding(
+    id="F-018",
+    type="performance_bottleneck",
+    summary="Pressure log/power calculations remain on CPU",
+    evidence=["profile-034"],
+    files=[...],
+)
+```
+
+The CUDA agent doesn't need the PerformanceAgent's entire conversation.
+
+It gets:
+
+```text
+TASK
+
+Optimize finding F-018.
+
+RELEVANT FINDINGS
+
+F-018:
+Pressure log/power calculations remain on CPU.
+Profile: profile-034
+Cost: 72 s
+
+RELEVANT FILES
+...
+
+CONSTRAINTS
+Exact numerical equivalence required.
+```
+
+That's much cleaner.
+
+---
+
+# But agents should still have private state
+
+I would actually use **three levels of memory**.
+
+```text
+                GEOS knowledge
+               long-term memory
+                     │
+                     ▼
+                GEOSSession
+               project/task state
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+       CUDA       FV3       Validation
+      private    private      private
+       state      state        state
+```
+
+### 1. Agent-local state
+
+For things specific to that specialist:
+
+```text
+CUDAAgent:
+
+Current hypothesis:
+  wrapper allocations causing synchronization
+
+Files inspected:
+  cuda_state.cpp
+  cuda_wrapper.cpp
+
+Next action:
+  inspect cudaMalloc calls
+```
+
+Short-lived and mostly private.
+
+### 2. Session state
+
+Things everyone should know:
+
+```text
+C384 passed.
+C576 passed.
+Commit abc123 is current.
+GPU baseline = 601.59 seconds.
+Current GPU = 540.12 seconds.
+```
+
+This is authoritative.
+
+### 3. GEOS knowledge
+
+Things learned that should survive sessions:
+
+```text
+FV3 D-grid winds are...
+MAPL owns...
+C576 validation command is...
+GEOSfvdycore depends on...
+Discover GPU nodes use...
+```
+
+That's your persistent GEOS knowledge base.
+
+---
+
+# This gives you a Codex-like experience
+
+Imagine today you run:
+
+```bash
+$ geos-agent
+
+GEOS Agent
+Workspace: ~/GEOS
+
+> Continue optimizing FV dynamics.
+```
+
+It could respond:
+
+```text
+Resuming session geos-184.
+
+Current state:
+
+FV dynamics
+CPU: 558.08 s
+GPU: 210.21 s
+Speedup: 2.65×
+
+Full model:
+~1.77×
+
+Last completed:
+✓ fused thermodynamics
+✓ C384 validation
+✓ C576 validation
+
+Current investigation:
+pressure logarithm/power calculations
+still execute on CPU.
+
+I'll resume from that task.
+```
+
+Then you close your laptop.
+
+Tomorrow:
+
+```bash
+geos-agent resume
+```
+
+and it loads:
+
+```text
+session database
++
+git state
++
+worktree
++
+artifacts
++
+task graph
++
+relevant agent memories
+```
+
+instead of depending solely on reconstructing everything from conversation history.
+
+That's similar in user experience to `codex resume`, which reopens saved sessions, but your implementation would add GEOS-specific structured engineering state. ([OpenAI Developers][3])
+
+---
+
+# You could even use commands similar to Codex
+
+```text
+/status
+
+Session: geos-184
+Branch: cuda-modernization
+Objective: GPU modernization
+
+Tasks:
+  14 completed
+   1 running
+   3 pending
+
+Validation:
+  C24   ✓
+  C96   ✓
+  C180  ✓
+  C384  ✓
+  C576  ✓
+
+Latest speedup:
+  FV dynamics: 2.65×
+  Full model: 1.77×
+```
+
+Then:
+
+```text
+/agents
+```
+
+could show:
+
+```text
+GEOSAgent
+│
+├── PerformanceAgent
+│      status: waiting
+│
+├── CUDAAgent
+│      status: working
+│      task: pressure routines
+│
+└── ValidationAgent
+       status: waiting
+```
+
+And:
+
+```text
+/history
+```
+
+could show:
+
+```text
+T-031 Profile FV dynamics             ✓
+T-032 Identify CPU bottlenecks        ✓
+T-033 Port thermodynamics             ✓
+T-034 Validate C384                   ✓
+T-035 Validate C576                   ✓
+T-036 Port pressure calculations      RUNNING
+```
+
+That would be very usable.
+
+---
+
+# The task graph is more important than chat history
+
+This is the piece I'd emphasize.
+
+Instead of representing the work as:
+
+```text
+message
+message
+message
+message
+message
+message
+```
+
+represent it as:
+
+```text
+                   Optimize FV3
+                        │
+            ┌───────────┴───────────┐
+            ▼                       ▼
+       Profile model           Establish baseline
+            │                       │
+            └──────────┬────────────┘
+                       ▼
+              Identify bottleneck
+                       │
+                       ▼
+                Port routine
+                       │
+                       ▼
+                    Build
+                       │
+                 ┌─────┴─────┐
+                 ▼           ▼
+             Validate     Benchmark
+                 │           │
+                 └─────┬─────┘
+                       ▼
+                   Accepted
+```
+
+Each node has:
+
+```python
+Task(
+    id="T-036",
+    parent="T-030",
+    assigned_to="CUDAAgent",
+
+    status="running",
+
+    inputs=[...],
+    outputs=[...],
+
+    findings=[...],
+    artifacts=[...],
+
+    depends_on=["T-035"],
+)
+```
+
+Now an agent can crash, the model can change, the context can be compacted, or you can stop for three days.
+
+The **engineering state survives**.
+
+---
+
+## And agents should communicate through typed artifacts
+
+Rather than:
+
+> Hey ValidationAgent, CUDAAgent said he changed something and thinks it works.
+
+you want:
+
+```python
+CodeChange(
+    id="C-17",
+    repository="GEOSfvdycore",
+    commit="ac421d",
+    files=[...],
+    description="Move pressure logarithm to GPU",
+    originating_task="T-036",
+)
+```
+
+Then:
+
+```python
+await validation.validate(change)
+```
+
+returns:
+
+```python
+ValidationResult(
+    change="C-17",
+
+    checks={
+        "oracle": PASS,
+        "sanitizer": PASS,
+        "C24": PASS,
+        "C96": PASS,
+        "C180": PASS,
+        "C384": PASS,
+        "C576": PASS,
+    },
+
+    numerical_equivalence=True,
+)
+```
+
+Then PerformanceAgent receives **that object**.
+
+That is where the object-oriented approach becomes genuinely useful rather than just stylistic.
+
+---
+
+# I would persist it in SQLite first
+
+You don't need a vector database and distributed state system initially.
+
+Something as boring as:
+
+```text
+~/.geos-agent/
+│
+├── sessions.db
+│
+├── sessions/
+│   └── geos-184/
+│       ├── state.json
+│       ├── artifacts/
+│       ├── profiles/
+│       ├── builds/
+│       └── validation/
+│
+└── memory/
+    ├── geos.json
+    ├── fv3.json
+    └── mapl.json
+```
+
+plus the actual Git worktrees:
+
+```text
+~/geos-worktrees/
+    geos-184/
+        GEOSgcm/
+        GEOSfvdycore/
+        MAPL/
+```
+
+would be plenty.
+
+SQLite stores relationships/state.
+
+Filesystem stores large artifacts.
+
+Git stores source changes.
+
+That's a very robust combination.
+
+---
+
+## One major difference from Codex
+
+I wouldn't try to create a **better generic Codex**.
+
+Codex already knows how to inspect/edit/run code, delegate to subagents, use repository-level instructions, resume sessions, and maintain long trajectories. ([OpenAI Developers][1])
+
+Your advantage is:
+
+```text
+               Generic coding agent
+                       │
+                       ▼
+                 GEOS Agents
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+ GEOS knowledge   HPC workflows   Science validation
+```
+
+You could even eventually use **Codex itself as one of the execution agents**.
+
+For example:
+
+```text
+GEOSAgent
+   │
+   ├── ArchitectureAgent
+   │
+   ├── PerformanceAgent
+   │
+   ├── CodingAgent ─────► Codex
+   │
+   └── ValidationAgent
+```
+
+Your framework doesn't necessarily have to compete with coding agents.
+
+It can be the **GEOS-aware orchestration, state, validation, and knowledge layer above them**.
+
+And I think that's the more compelling architecture: **NOOA provides the agent/object composition, Codex or another strong coding model can provide raw coding capability, while `GEOSSession + GEOSWorkspace + TaskGraph` provide the durable intelligence that makes the whole system understand how GEOS engineering actually works.**
+
+[1]: https://developers.openai.com/api/docs/guides/latest-model?gallery=open&galleryItem=trivia-quiz-game&model=gpt-5.3-codex&translationFallback=de-DE&utm_source=chatgpt.com "Model guidance | OpenAI API"
+[2]: https://developers.openai.com/api/reference/python/resources/beta/subresources/agents/subresources/sessions?utm_source=chatgpt.com "Sessions | OpenAI API Reference"
+[3]: https://developers.openai.com/es-419/docs/codex/cli?utm_source=chatgpt.com "Codex CLI | ChatGPT Learn"
+
