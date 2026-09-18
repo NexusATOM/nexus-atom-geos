@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -20,12 +20,43 @@ class Workflow(StrEnum):
     IMPLEMENT = "implement"
 
 
+ObjectiveTag = Annotated[str, Field(pattern=r"^[a-z][a-z0-9_-]*$", max_length=64)]
+
+
+class SpecialistProfile(Contract):
+    """Operator-configured advisory expertise; never an execution or acceptance policy."""
+
+    name: str = Field(pattern=r"^[a-z][a-z0-9_-]*$", max_length=64)
+    instructions: str = Field(min_length=1, max_length=4000)
+    repositories: tuple[str, ...] = Field(default=(), max_length=8)
+    objective_tags: tuple[ObjectiveTag, ...] = Field(default=(), max_length=8)
+    required_evidence: tuple[Annotated[str, Field(min_length=1, max_length=256)], ...] = Field(
+        default=(), max_length=16
+    )
+
+    @field_validator("instructions")
+    @classmethod
+    def meaningful_instructions(cls, value):
+        if not value.strip():
+            raise ValueError("Specialist instructions must not be blank")
+        return value.strip()
+
+
 class GEOSTask(Contract):
     description: str = Field(min_length=1, max_length=8000)
     workflow: Workflow = Workflow.INVESTIGATE
     repositories: tuple[str, ...] = ()
     constraints: tuple[str, ...] = ("preserve scientific meaning",)
     max_repositories: int = Field(default=3, ge=1, le=8)
+    objective_tags: tuple[ObjectiveTag, ...] = Field(default=(), max_length=8)
+    specialists: tuple[SpecialistProfile, ...] = Field(default=(), max_length=8)
+
+    @field_validator("specialists")
+    @classmethod
+    def unique_specialists(cls, value):
+        if len({profile.name for profile in value}) != len(value):
+            raise ValueError("Specialist names must be unique")
+        return value
 
     @field_validator("description")
     @classmethod

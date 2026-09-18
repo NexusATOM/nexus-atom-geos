@@ -16,6 +16,7 @@ from geos_agents.catalog import CATALOG
 from geos_agents.context import ContextLoader
 from geos_agents.models import GEOSTask, Workflow
 from geos_agents.registry import RepositoryRegistry
+from geos_agents.specialists import add_specialist_arguments, task_specialists
 from geos_agents.workflows import WorkflowRunner
 
 
@@ -72,6 +73,7 @@ def parser() -> argparse.ArgumentParser:
     work = commands.add_parser(
         "work", help="isolated investigate/edit/build/validate/benchmark workflow"
     )
+    add_specialist_arguments(work)
     work.add_argument("task")
     work.add_argument("--workspace", type=Path, required=True)
     work.add_argument(
@@ -89,6 +91,7 @@ def parser() -> argparse.ArgumentParser:
     work.add_argument("--output", type=Path, default=Path(".geos-agent/runs"))
     for workflow in Workflow:
         cmd = commands.add_parser(workflow.value, help=f"run the {workflow.value} workflow")
+        add_specialist_arguments(cmd)
         cmd.add_argument("task")
         cmd.add_argument("--workspace", type=Path, required=True)
         cmd.add_argument("--repo", action="append", default=[])
@@ -130,6 +133,7 @@ async def _workflow(args) -> tuple[object, WorkflowRunner]:
     )
     task = GEOSTask(
         description=args.task,
+        **task_specialists(args),
         workflow=Workflow(args.command),
         repositories=tuple(args.repo),
         constraints=tuple(args.constraint) or ("preserve scientific meaning",),
@@ -237,6 +241,7 @@ async def _engineering(args) -> dict:
         llm = get_llm_client(args.model)
     task = GEOSTask(
         description=args.task,
+        **task_specialists(args),
         workflow=Workflow.IMPLEMENT,
         repositories=tuple(args.repo),
         constraints=tuple(args.constraint) or ("preserve scientific meaning",),

@@ -53,6 +53,7 @@ jobs:
         working-directory: nexus-atom-geos
         run: |
           python examples/legacy/run_agents_demo.py
+          python examples/legacy/run_agents_demo.py --with-specialists
           python examples/legacy/run_engineering_demo.py
       - name: Build shared libraries for isolated wheel check
         run: |
@@ -69,7 +70,7 @@ jobs:
             nexus-atom-geos/dist/*.whl 'nooa==0.0.10'
           /tmp/geos-wheel-check/bin/geos-agent --version
           /tmp/geos-wheel-check/bin/python nexus-atom-geos/examples/legacy/check_installed_package.py
-          /tmp/geos-wheel-check/bin/python nexus-atom-geos/examples/legacy/run_agents_demo.py
+          /tmp/geos-wheel-check/bin/python nexus-atom-geos/examples/legacy/run_agents_demo.py --with-specialists
       - uses: actions/upload-artifact@v4
         with:
           name: nexus-atom-geos-python-${{ matrix.python }}

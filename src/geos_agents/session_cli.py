@@ -11,6 +11,7 @@ from geos_agents.engineering import EngineeringPolicy
 from geos_agents.models import GEOSTask, PatchProposal, Workflow
 from geos_agents.registry import RepositoryRegistry
 from geos_agents.sessions import GEOSSession, SessionRequest, SessionStore
+from geos_agents.specialists import add_specialist_arguments, task_specialists
 
 DEFAULT_DB = Path(".geos-agent/sessions.sqlite3")
 
@@ -25,6 +26,7 @@ def register(commands):
     for name in ("show", "history", "verify", "recover", "refresh"):
         actions.add_parser(name).add_argument("session_id")
     add = actions.add_parser("add")
+    add_specialist_arguments(add)
     add.add_argument("session_id")
     add.add_argument("task")
     add.add_argument(
@@ -81,6 +83,7 @@ def _request(args) -> SessionRequest:
     return SessionRequest(
         task=GEOSTask(
             description=args.task,
+            **task_specialists(args),
             workflow=Workflow.IMPLEMENT if kind == "work" else Workflow(args.workflow),
             repositories=tuple(args.repo),
             constraints=tuple(args.constraint) or ("preserve scientific meaning",),

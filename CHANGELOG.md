@@ -20,3 +20,6 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
 - Make this repository the canonical GEOS Agent home: migrate usage/readiness
   guides and runnable specialist/session examples, correct legacy paths, retain
   source history and namespaced release tags, and add clean-wheel agent checks.
+- Add optional, bounded repository/objective specialist profiles with deterministic
+  selection, scoped citation checks, and session-persisted configuration. Include
+  profile examples, a scripted NOOA demonstration, and an evaluation/input guide.

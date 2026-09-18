@@ -45,6 +45,7 @@ Apache-2.0. This is an independent implementation for model orchestration, not a
 ## Documentation
 
 - [How to use and orchestrate the agents](docs/AGENTS.md)
+- [Optional repository/science specialists and improvement inputs](docs/SPECIALISTS.md)
 - [Setup and readiness](docs/READINESS.md)
 - [Migration coverage and preserved history](docs/MIGRATION.md)
 

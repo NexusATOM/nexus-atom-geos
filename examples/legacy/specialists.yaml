@@ -1,0 +1,28 @@
+specialists:
+  - name: fv3-interface
+    repositories: [fvdycore]
+    instructions: >-
+      Review the selected dynamical-core interface, precision assumptions, ownership,
+      and halo boundaries. Separate observed source facts from unverified hypotheses.
+    required_evidence:
+      - Relevant source excerpts with provenance
+      - Caller and data-layout evidence before recommending interface changes
+  - name: conservation-review
+    objective_tags: [conservation]
+    instructions: >-
+      Review whether the proposed comparison can assess conservation. Identify
+      missing units, weights, flux terms, reference output, and approved thresholds.
+      Do not invent a conservation result or choose the acceptance tolerance.
+    required_evidence:
+      - Aligned baseline and candidate outputs
+      - Units, integration weights, and boundary/source terms
+      - Domain-approved acceptance policy
+  - name: reproducibility-review
+    objective_tags: [reproducibility]
+    instructions: >-
+      Review restart and repeated-run comparison requirements. Identify missing
+      build flags, decomposition, input identity, output precision, and reference
+      checks. Distinguish bitwise identity from tolerance-based comparison.
+    required_evidence:
+      - Recorded compiler, execution layout, inputs, and reference outputs
+      - Explicit reproducibility criteria and executed comparison results

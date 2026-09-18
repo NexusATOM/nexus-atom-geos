@@ -1,9 +1,12 @@
 # How to use and orchestrate the GEOS agents
 
-There are six NOOA agent classes. Five provide specialist reasoning and the sixth,
+There are six built-in NOOA roles. Five provide specialist reasoning and the sixth,
 `GEOSAgent`, invokes a bounded workflow. They are composable Python objects;
 they are not six background services or six separate model providers. The default
 workflow invokes selected specialists sequentially with the same model client.
+
+Optional [repository and science-objective profiles](SPECIALISTS.md) add scoped
+reviewers through `ProfileSpecialistAgent`, with explicit selection and saved configuration.
 
 ## Agents available today
 

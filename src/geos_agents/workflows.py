@@ -23,6 +23,7 @@ from geos_agents.models import (
     Workflow,
 )
 from geos_agents.registry import RepositoryRegistry
+from geos_agents.specialists import select_specialists
 from geos_agents.trace import RunTrace
 
 if TYPE_CHECKING:
@@ -143,6 +144,22 @@ class WorkflowRunner:
             assessments: dict[str, Assessment] = {}
             proposal = None
             usable = tuple(c for c in contexts if c.evidence)
+            specialists = select_specialists(task, self.registry, contexts, self.measurements)
+            trace.artifact(
+                "specialists.json",
+                {
+                    "enabled": [p.name for p in task.specialists],
+                    "selected": [
+                        {
+                            "name": p.name,
+                            "repositories": [c.repository for c in scoped],
+                            "measurement_ids": [m.id for m in timings],
+                        }
+                        for p, scoped, timings in specialists
+                    ],
+                    "mode": "nooa" if llm else "offline; no specialist calls",
+                },
+            )
 
             async def invoke(label, method, *args, citation_contexts=contexts, extra_ids=()):
                 with trace.span("delegation", specialist=label):
@@ -159,6 +176,7 @@ class WorkflowRunner:
                     ArchitectureAgent,
                     CUDAAgent,
                     PerformanceAgent,
+                    ProfileSpecialistAgent,
                     RepositoryAgent,
                     ValidationAgent,
                 )
@@ -172,6 +190,17 @@ class WorkflowRunner:
                         context,
                         self.session_context,
                         citation_contexts=(context,),
+                    )
+                for profile, scoped, timings in specialists:
+                    assessments[f"specialist:{profile.name}"] = await invoke(
+                        f"ProfileSpecialistAgent:{profile.name}",
+                        ProfileSpecialistAgent(llm=llm).review,
+                        task,
+                        profile,
+                        scoped,
+                        timings,
+                        citation_contexts=scoped,
+                        extra_ids=tuple(m.id for m in timings),
                     )
                 measurement_ids = tuple(m.id for m in self.measurements)
                 if self.measurements:

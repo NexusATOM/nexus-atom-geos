@@ -107,3 +107,12 @@ authorization. Policies/proposals are saved as typed values, not mutable referen
 to external config files. Workspace command definitions are snapshotted when a
 session is created. Tests may supply `run_pending(llm_factory=...)` for scripted
 NOOA clients without network or credentials.
+
+
+## Optional specialist profiles
+
+`SpecialistProfile` and the `GEOSTask.specialists` / `objective_tags` fields add
+repository- or objective-focused reviews to `WorkflowRunner`. See the
+[profile guide](../SPECIALISTS.md) for configuration, scoping, session persistence,
+model-call boundaries, and improvement inputs. `ProfileSpecialistAgent.review`
+is advisory and returns `Assessment`; it cannot award an executed gate result.

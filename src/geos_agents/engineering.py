@@ -19,6 +19,7 @@ from geos_agents.context import confined_file, digest, git_state
 from geos_agents.models import Contract, GEOSTask, PatchProposal, TimingEvidence, Workflow
 from geos_agents.patches import PatchManager
 from geos_agents.registry import RepositoryRegistry
+from geos_agents.specialists import select_specialists
 from geos_agents.trace import RunTrace
 from geos_agents.validation import FieldDataset, TolerancePolicy, compare_fields
 from geos_agents.workflows import WorkflowRunner
@@ -95,6 +96,7 @@ class EngineeringRunner:
         trace.artifact("policy.json", policy)
         with self._reporting(trace, report), trace.span("engineering", execute=execute):
             self._preflight(policy)
+            select_specialists(task, self.registry, (), ())
             if not execute:
                 report["next_step"] = (
                     "Review policy, then pass --execute with a model and targets or an existing proposal."
