@@ -1,0 +1,374 @@
+{
+  "$defs": {
+    "Environment": {
+      "additionalProperties": false,
+      "properties": {
+        "modules": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Modules",
+          "type": "array"
+        },
+        "module_init": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Module Init"
+        },
+        "variables": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Variables",
+          "type": "object"
+        },
+        "container_image": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Container Image"
+        },
+        "container_runtime": {
+          "default": "apptainer",
+          "enum": [
+            "apptainer",
+            "singularity"
+          ],
+          "title": "Container Runtime",
+          "type": "string"
+        }
+      },
+      "title": "Environment",
+      "type": "object"
+    },
+    "ResourceRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Nodes",
+          "type": "integer"
+        },
+        "cpus": {
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "title": "Cpus",
+          "type": "integer"
+        },
+        "gpus": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Gpus",
+          "type": "integer"
+        },
+        "gpu_type": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gpu Type"
+        },
+        "memory": {
+          "default": "1GB",
+          "pattern": "^\\d+(?:[KMGT](?:i?B)?)?$",
+          "title": "Memory",
+          "type": "string"
+        },
+        "walltime": {
+          "default": "00:10:00",
+          "pattern": "^\\d{2,3}:[0-5]\\d:[0-5]\\d$",
+          "title": "Walltime",
+          "type": "string"
+        },
+        "account": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Account"
+        },
+        "partition": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Partition"
+        }
+      },
+      "title": "ResourceRequest",
+      "type": "object"
+    },
+    "ScientificDiagnostic": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "metric": {
+          "pattern": "^(rmse|bias|conservation)$",
+          "title": "Metric",
+          "type": "string"
+        },
+        "maximum_absolute": {
+          "minimum": 0,
+          "title": "Maximum Absolute",
+          "type": "number"
+        }
+      },
+      "required": [
+        "field",
+        "metric",
+        "maximum_absolute"
+      ],
+      "title": "ScientificDiagnostic",
+      "type": "object"
+    },
+    "Tolerance": {
+      "additionalProperties": false,
+      "properties": {
+        "atol": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Atol",
+          "type": "number"
+        },
+        "rtol": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Rtol",
+          "type": "number"
+        },
+        "bitwise": {
+          "default": false,
+          "title": "Bitwise",
+          "type": "boolean"
+        }
+      },
+      "title": "Tolerance",
+      "type": "object"
+    },
+    "ValidationSuite": {
+      "additionalProperties": false,
+      "properties": {
+        "diagnostics": {
+          "items": {
+            "$ref": "#/$defs/ScientificDiagnostic"
+          },
+          "minItems": 1,
+          "title": "Diagnostics",
+          "type": "array"
+        }
+      },
+      "required": [
+        "diagnostics"
+      ],
+      "title": "ValidationSuite",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "workspace": {
+      "format": "path",
+      "title": "Workspace",
+      "type": "string"
+    },
+    "repository": {
+      "title": "Repository",
+      "type": "string"
+    },
+    "backend": {
+      "default": "local",
+      "enum": [
+        "local",
+        "slurm"
+      ],
+      "title": "Backend",
+      "type": "string"
+    },
+    "resources": {
+      "$ref": "#/$defs/ResourceRequest"
+    },
+    "environment": {
+      "$ref": "#/$defs/Environment"
+    },
+    "commands": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Commands",
+      "type": "object"
+    },
+    "phase_commands": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": "object"
+      },
+      "title": "Phase Commands",
+      "type": "object"
+    },
+    "phase_resources": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ResourceRequest"
+      },
+      "title": "Phase Resources",
+      "type": "object"
+    },
+    "benchmark_seconds_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Benchmark Seconds File"
+    },
+    "dataset": {
+      "default": "results/fields.json",
+      "title": "Dataset",
+      "type": "string"
+    },
+    "tolerance": {
+      "$ref": "#/$defs/Tolerance"
+    },
+    "science": {
+      "$ref": "#/$defs/ValidationSuite"
+    },
+    "repeats": {
+      "default": 5,
+      "maximum": 100,
+      "minimum": 3,
+      "title": "Repeats",
+      "type": "integer"
+    },
+    "warmups": {
+      "default": 1,
+      "maximum": 20,
+      "minimum": 0,
+      "title": "Warmups",
+      "type": "integer"
+    },
+    "benchmark_identity": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "minProperties": 1,
+      "title": "Benchmark Identity",
+      "type": "object"
+    },
+    "proposal": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Proposal"
+    },
+    "runtime_argv": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runtime Argv"
+    },
+    "nooa_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Nooa Model"
+    },
+    "targets": {
+      "default": [],
+      "items": {
+        "maxItems": 2,
+        "minItems": 2,
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Targets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "workspace",
+    "repository",
+    "commands",
+    "science",
+    "benchmark_identity"
+  ],
+  "title": "GEOSConfig",
+  "type": "object"
+}

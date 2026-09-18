@@ -33,3 +33,12 @@ python3 -m venv .venv
 Run package tests with `python -m pytest tests` after installing the `dev` extra and sibling dependencies. The GEOS legacy tests also require the `nooa` extra; GEOS integration tests require the controller. CI tests Python 3.12 and 3.13 and builds wheel/sdist artifacts. See the [architecture and implementation map](https://github.com/NexusATOM/nexus-atom-controller/blob/main/docs/ARCHITECTURE.md).
 
 Apache-2.0. This is an independent implementation for model orchestration, not an official NASA model distribution or endorsement.
+
+## Documentation
+
+- [Discover configuration](docs/DISCOVER.md)
+- [Usage and configuration](docs/USAGE.md)
+- [Python API reference](docs/API.md)
+- [Contributing](CONTRIBUTING.md)
+- [Execution boundaries](SECURITY.md)
+- [Changes](CHANGELOG.md)

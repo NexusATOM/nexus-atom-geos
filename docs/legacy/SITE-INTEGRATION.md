@@ -3,8 +3,8 @@
 The library supplies the engineering process. Your site supplies the compiler,
 MPI/CUDA stack, ESMF/Baselibs, scheduler allocation, input datasets, restart/oracle
 outputs, experiment scripts and scientifically approved tolerances. Do not infer
-these from an example. [Workspace](../examples/site/workspace.yaml) and
-[policy](../examples/site/policy.yaml) are templates, not runnable Discover recipes.
+these from an example. [Workspace](../../examples/legacy/site/workspace.yaml) and
+[policy](../../examples/legacy/site/policy.yaml) are templates, not runnable Discover recipes.
 
 ## Prepare a reproducible workspace
 
