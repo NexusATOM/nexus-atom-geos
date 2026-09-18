@@ -34,7 +34,7 @@ def _sequential_plan(operations, proposal, hypothesis):
     tasks = []
     for index, (operation, phase) in enumerate(operations):
         parameters = {"phase": phase}
-        if proposal and operation == "optimize":
+        if proposal and operation in {"optimize", "repair"}:
             parameters["proposal"] = proposal
         tasks.append(
             Task(
@@ -82,7 +82,25 @@ gpu_port_plan = modernization_plan
 optimize_plan = modernization_plan
 
 
-def debug_plan():
-    raise NotImplementedError(
-        "Debugging requires an explicit failure-reproduction and repair policy"
-    )
+def debug_plan(
+    *,
+    proposal: str | None = None,
+    software_checks: tuple[str, ...] = (),
+    hypothesis="Reproduce a specified failure and verify its repair against trusted reference data",
+) -> Plan:
+    if set(software_checks) - {"test", "sanitize"} or len(set(software_checks)) != len(
+        software_checks
+    ):
+        raise ValueError("Software checks must be unique test/sanitize operations")
+    operations = [
+        ("inspect", "baseline"),
+        ("reproduce", "baseline"),
+        ("diagnose", "baseline"),
+        ("repair", "candidate"),
+        ("build", "candidate"),
+        *((check, "candidate") for check in software_checks),
+        ("run", "candidate"),
+        ("reproduce", "candidate"),
+        ("validate", "candidate"),
+    ]
+    return _sequential_plan(operations, proposal, hypothesis)

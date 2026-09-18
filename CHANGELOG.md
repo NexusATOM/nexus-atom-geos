@@ -27,3 +27,9 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
   comparisons, prepared-patch or repeated-source modes, and non-performance gates.
   Reject live proposal generation/speedup targets in regression. The unfinished
   debug helper now fails explicitly instead of presenting regression as debugging.
+
+### Debug workflow
+
+- Added failure reproduction, recorded diagnostics, prepared/runtime repairs,
+  protected harness files, and hash-verified trusted-reference acceptance.
+- Added a runnable synthetic debugging example and negative repair tests.

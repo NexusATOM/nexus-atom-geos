@@ -1,5 +1,67 @@
 {
   "$defs": {
+    "DebugPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "reference_dataset": {
+          "format": "path",
+          "title": "Reference Dataset",
+          "type": "string"
+        },
+        "reference_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Reference Sha256",
+          "type": "string"
+        },
+        "expected_exit_code": {
+          "maximum": 255,
+          "minimum": 1,
+          "title": "Expected Exit Code",
+          "type": "integer"
+        },
+        "failure_signature": {
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Failure Signature",
+          "type": "string"
+        },
+        "signature_stream": {
+          "default": "stderr",
+          "enum": [
+            "stdout",
+            "stderr"
+          ],
+          "title": "Signature Stream",
+          "type": "string"
+        },
+        "protected_files": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Protected Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "reference_dataset",
+        "reference_sha256",
+        "expected_exit_code",
+        "failure_signature"
+      ],
+      "title": "DebugPolicy",
+      "type": "object"
+    },
     "Environment": {
       "additionalProperties": false,
       "properties": {
@@ -208,10 +270,22 @@
       "default": "modernization",
       "enum": [
         "modernization",
-        "regression"
+        "regression",
+        "debug"
       ],
       "title": "Workflow",
       "type": "string"
+    },
+    "debug": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DebugPolicy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "workspace": {
       "format": "path",

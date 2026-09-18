@@ -4,13 +4,29 @@ Public definitions below are generated from the shipped source. See USAGE.md and
 
 ## `nexus_atom_geos.config`
 
-### `GEOSConfig`
+### `DebugPolicy`
 
 [Source](../src/nexus_atom_geos/config.py#L10)
 
 ```python
+class DebugPolicy(Contract):
+    reference_dataset: Path
+    reference_sha256: str = Field(pattern='^[0-9a-f]{64}$')
+    expected_exit_code: int = Field(ge=1, le=255)
+    failure_signature: str = Field(min_length=1, max_length=256)
+    signature_stream: Literal['stdout', 'stderr'] = 'stderr'
+    protected_files: tuple[tuple[str, str], ...] = ()
+    def signature_is_meaningful(self): ...
+```
+
+### `GEOSConfig`
+
+[Source](../src/nexus_atom_geos/config.py#L25)
+
+```python
 class GEOSConfig(Contract):
-    workflow: Literal['modernization', 'regression'] = 'modernization'
+    workflow: Literal['modernization', 'regression', 'debug'] = 'modernization'
+    debug: DebugPolicy | None = None
     workspace: Path
     repository: str
     backend: Literal['local', 'slurm'] = 'local'
@@ -34,6 +50,58 @@ class GEOSConfig(Contract):
     targets: tuple[tuple[str, str], ...] = ()
     def configured(self): ...
     def from_file(cls, path: Path): ...
+```
+
+## `nexus_atom_geos.debugging`
+
+Deterministic debug evidence, separate from model-generated repair hypotheses.
+
+### `write`
+
+[Source](../src/nexus_atom_geos/debugging.py#L11)
+
+```python
+def write(path, value): ...
+```
+
+### `protection`
+
+[Source](../src/nexus_atom_geos/debugging.py#L16)
+
+```python
+def protection(registry, policy): ...
+```
+
+### `prepare_debug`
+
+[Source](../src/nexus_atom_geos/debugging.py#L29)
+
+```python
+def prepare_debug(config, registry, evidence): ...
+```
+
+### `contains_signature`
+
+[Source](../src/nexus_atom_geos/debugging.py#L51)
+
+```python
+def contains_signature(path, signature): ...
+```
+
+### `reproduction_matches`
+
+[Source](../src/nexus_atom_geos/debugging.py#L63)
+
+```python
+def reproduction_matches(record, policy): ...
+```
+
+### `repair_verified`
+
+[Source](../src/nexus_atom_geos/debugging.py#L72)
+
+```python
+def repair_verified(evidence, policy): ...
 ```
 
 ## `nexus_atom_geos.demo`
@@ -161,7 +229,7 @@ class GEOSEvaluator(Evaluator):
 
 ### `GEOSPlugin`
 
-[Source](../src/nexus_atom_geos/plugin.py#L139)
+[Source](../src/nexus_atom_geos/plugin.py#L158)
 
 ```python
 class GEOSPlugin(ModelPlugin):
@@ -200,5 +268,5 @@ def regression_plan(*, proposal: str | None=None, software_checks: tuple[str, ..
 [Source](../src/nexus_atom_geos/workflows.py#L85)
 
 ```python
-def debug_plan(): ...
+def debug_plan(*, proposal: str | None=None, software_checks: tuple[str, ...]=(), hypothesis='Reproduce a specified failure and verify its repair against trusted reference data') -> Plan: ...
 ```

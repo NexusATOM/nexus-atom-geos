@@ -7,7 +7,7 @@ from nexus_atom_core import Budget, CapabilityRegistry, Goal
 
 from nexus_atom_geos.config import GEOSConfig
 from nexus_atom_geos.plugin import GEOSPlugin
-from nexus_atom_geos.workflows import debug_plan, regression_plan
+from nexus_atom_geos.workflows import regression_plan
 
 
 def regression_plugin(tmp_path, *, prepared=True):
@@ -109,5 +109,3 @@ async def test_regression_rejects_generation_and_speedup_targets(tmp_path):
         GEOSConfig.model_validate({**plugin.config.model_dump(), "workflow": "modernization"})
     with pytest.raises(ValueError, match="unique"):
         regression_plan(software_checks=("test", "test"))
-    with pytest.raises(NotImplementedError, match="failure-reproduction"):
-        debug_plan()

@@ -78,6 +78,21 @@ class GEOSEvaluator(Evaluator):
 
     async def evaluate(self, goal, results, directory):
         evidence = directory / "evidence"
+        debug = self.plugin.config.workflow == "debug"
+        if self.name == "repair":
+            from .debugging import repair_verified
+
+            return Evaluation(
+                evaluator=self.name,
+                passed=debug and repair_verified(evidence, self.plugin.config.debug),
+                evidence=(
+                    "evidence/baseline-reproduce.json",
+                    "evidence/candidate-reproduce.json",
+                    "evidence/debug-reference.json",
+                    "evidence/debug-protected.json",
+                    "evidence/proposal.json",
+                ),
+            )
         if self.name in {"software", "tests", "sanitizers"}:
             checks = self.plugin.config.software_checks
             kinds = (
@@ -85,18 +100,22 @@ class GEOSEvaluator(Evaluator):
                 if self.name == "software"
                 else ("test" if self.name == "tests" else "sanitize",)
             )
+            phases = ("candidate",) if debug else ("baseline", "candidate")
             records = [
                 json.loads((evidence / f"{phase}-{kind}.json").read_text())
-                for phase in ("baseline", "candidate")
+                for phase in phases
                 for kind in kinds
             ]
+            passed = all(r["status"] == "succeeded" for r in records)
+            if debug and self.name == "software":
+                from .debugging import repair_verified
+
+                passed = passed and repair_verified(evidence, self.plugin.config.debug)
             return Evaluation(
                 evaluator=self.name,
-                passed=all(r["status"] == "succeeded" for r in records),
+                passed=passed,
                 evidence=tuple(
-                    f"evidence/{phase}-{kind}.json"
-                    for phase in ("baseline", "candidate")
-                    for kind in kinds
+                    f"evidence/{phase}-{kind}.json" for phase in phases for kind in kinds
                 ),
             )
         if self.name == "performance":
@@ -163,6 +182,8 @@ class GEOSPlugin(ModelPlugin):
                 "benchmark",
                 "validate",
                 "optimize",
+                "repair",
+                "reproduce",
                 "diagnose",
             )
         ]
@@ -170,7 +191,15 @@ class GEOSPlugin(ModelPlugin):
     def evaluators(self):
         return [
             GEOSEvaluator(self, name)
-            for name in ("software", "tests", "sanitizers", "numerical", "science", "performance")
+            for name in (
+                "software",
+                "tests",
+                "sanitizers",
+                "numerical",
+                "science",
+                "performance",
+                "repair",
+            )
         ]
 
     def _workspace(self, context):
@@ -198,6 +227,7 @@ class GEOSPlugin(ModelPlugin):
         job, result = await self.scheduler.run(spec)
         return {
             "job": job.model_dump(mode="json"),
+            "argv": list(spec.argv),
             "status": result.state,
             "elapsed_seconds": result.elapsed_seconds,
             "gpu_seconds": result.gpu_seconds,
@@ -230,10 +260,57 @@ class GEOSPlugin(ModelPlugin):
             }
             write_json(evidence / "source-commits.json", outputs)
             write_json(evidence / "site-policy.json", self.config.model_dump(mode="json"))
+            if self.config.workflow == "debug":
+                from .debugging import prepare_debug
+
+                prepare_debug(self.config, workspace.repositories, evidence)
         else:
             registry = self._workspace(context)
             root = registry.get(self.config.repository).path
-            if operation in {"build", "run", "profile", "test", "sanitize"}:
+            if operation == "reproduce":
+                if self.config.workflow != "debug":
+                    raise ValueError("Reproduction requires workflow: debug")
+                from .debugging import contains_signature, protection, reproduction_matches
+
+                expected = json.loads((evidence / "debug-protected.json").read_text())
+                if protection(registry, self.config.debug) != expected:
+                    raise ValueError("Protected debug harness files changed")
+                outputs = await self._command("reproduce", phase, context, registry)
+                outputs["protected_unchanged"] = protection(registry, self.config.debug) == expected
+                stream = Path(outputs["job"][f"{self.config.debug.signature_stream}_path"])
+                outputs["signature_matched"] = stream.is_file() and contains_signature(
+                    stream, self.config.debug.failure_signature
+                )
+                passed = (
+                    reproduction_matches(outputs, self.config.debug)
+                    if phase == "baseline"
+                    else (
+                        outputs["status"] == "succeeded"
+                        and outputs["returncode"] == 0
+                        and outputs["protected_unchanged"]
+                    )
+                )
+                outputs["reproduction_gate_passed"] = passed
+                write_json(evidence / f"{phase}-reproduce.json", outputs)
+                usage = Usage(gpu_seconds=outputs["gpu_seconds"])
+                if not passed:
+                    return TaskResult(
+                        task_id=task.id,
+                        status="failed",
+                        outputs=outputs,
+                        usage=usage,
+                        error="Configured debug reproduction gate failed",
+                    )
+            elif operation == "diagnose" and self.config.workflow == "debug":
+                failure = json.loads((evidence / "baseline-reproduce.json").read_text())
+                outputs = {
+                    "kind": "recorded failure evidence; root cause not established",
+                    "failure": failure,
+                    "reference": json.loads((evidence / "debug-reference.json").read_text()),
+                    "protected_files": json.loads((evidence / "debug-protected.json").read_text()),
+                }
+                write_json(evidence / "diagnosis.json", outputs)
+            elif operation in {"build", "run", "profile", "test", "sanitize"}:
                 if operation == "run":
                     output = confined_file(root, self.config.dataset)
                     if output.exists():
@@ -308,7 +385,9 @@ class GEOSPlugin(ModelPlugin):
                         writer.writerow((phase, trial, seconds, outputs["measurement"]))
                 outputs["timing_csv"] = str(timing_csv.relative_to(directory))
                 usage = Usage(gpu_seconds=gpu_seconds)
-            elif operation == "optimize":
+            elif operation in {"optimize", "repair"}:
+                if operation == "repair" and self.config.workflow != "debug":
+                    raise ValueError("Repair requires workflow: debug")
                 proposal_path = task.parameters.get("proposal") or self.config.proposal
                 if proposal_path:
                     proposal = PatchProposal.model_validate_json(Path(proposal_path).read_text())
@@ -334,6 +413,18 @@ class GEOSPlugin(ModelPlugin):
                         if self.config.runtime_argv
                         else NOOARuntime(self.config.nooa_model)
                     )
+                    observations = (
+                        {"debug_diagnosis": json.loads((evidence / "diagnosis.json").read_text())}
+                        if self.config.workflow == "debug"
+                        else {
+                            "baseline_profile": json.loads(
+                                (evidence / "baseline-profile.json").read_text()
+                            ),
+                            "baseline_benchmark": json.loads(
+                                (evidence / "baseline-benchmark.json").read_text()
+                            ),
+                        }
+                    )
                     result = await runtime.execute(
                         task,
                         AgentContext(
@@ -346,12 +437,7 @@ class GEOSPlugin(ModelPlugin):
                                 "previous_task_results": task.parameters.get(
                                     "previous_task_results", []
                                 ),
-                                "baseline_profile": json.loads(
-                                    (evidence / "baseline-profile.json").read_text()
-                                ),
-                                "baseline_benchmark": json.loads(
-                                    (evidence / "baseline-benchmark.json").read_text()
-                                ),
+                                **observations,
                                 "proposal_schema": PatchProposal.model_json_schema(),
                             },
                         ),
@@ -366,7 +452,17 @@ class GEOSPlugin(ModelPlugin):
                     raise ValueError("Configure a prepared proposal or a runtime and target files")
                 if not proposal.changes:
                     raise ValueError("Empty optimization proposal")
-                trace = RunTrace(directory / "patches", kind="optimization")
+                if self.config.workflow == "debug":
+                    protected = {
+                        (registry.get(repo).name, path)
+                        for repo, path in self.config.debug.protected_files
+                    }
+                    if any(
+                        (registry.get(change.repository).name, change.path) in protected
+                        for change in proposal.changes
+                    ):
+                        raise ValueError("Repair cannot modify protected debug harness files")
+                trace = RunTrace(directory / "patches", kind=operation)
                 PatchManager(registry, trace).review(proposal, apply=True, require_clean=True)
                 outputs = {"summary": proposal.summary, "changes": len(proposal.changes)}
                 write_json(evidence / "proposal.json", proposal.model_dump(mode="json"))
@@ -445,15 +541,16 @@ class GEOSPlugin(ModelPlugin):
         checks = self.config.software_checks if self.config else ()
         additional = tuple("tests" if check == "test" else "sanitizers" for check in checks)
         performance = (
-            () if self.config and self.config.workflow == "regression" else ("performance",)
+            () if self.config and self.config.workflow != "modernization" else ("performance",)
         )
+        repair = ("repair",) if self.config and self.config.workflow == "debug" else ()
         return tuple(
             f"geos.{name}"
-            for name in ("software", *additional, "numerical", "science", *performance)
+            for name in ("software", *additional, "numerical", "science", *performance, *repair)
         )
 
     async def plan(self, goal, history, registry):
-        from .workflows import modernization_plan, regression_plan
+        from .workflows import debug_plan, modernization_plan, regression_plan
 
         if self.config.workflow == "regression":
             if "speedup" in goal.target:
@@ -465,6 +562,8 @@ class GEOSPlugin(ModelPlugin):
                 software_checks=self.config.software_checks,
                 hypothesis=goal.objective,
             )
+        if self.config.workflow == "debug" and "speedup" in goal.target:
+            raise ValueError("Debugging does not measure speedup; select modernization")
         if history and self.config.proposal:
             return None
         feedback = ""
@@ -472,7 +571,8 @@ class GEOSPlugin(ModelPlugin):
             feedback = " Previous attempt: " + json.dumps(
                 [e.model_dump(mode="json") for e in history[-1].evaluations]
             )
-        plan = modernization_plan(
+        planner = debug_plan if self.config.workflow == "debug" else modernization_plan
+        plan = planner(
             hypothesis=goal.objective + feedback, software_checks=self.config.software_checks
         )
         tasks = tuple(
@@ -491,7 +591,7 @@ class GEOSPlugin(ModelPlugin):
                     }
                 }
             )
-            if task.capability == "geos.optimize"
+            if task.capability in {"geos.optimize", "geos.repair"}
             else task
             for task in plan.graph.tasks
         )

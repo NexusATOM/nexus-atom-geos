@@ -39,9 +39,9 @@ jobs:
           -e './nexus-atom-hpc[dev]'
           -e './nexus-atom-science[dev,netcdf,plots]'
           -e './nexus-atom-geos[dev,nooa]'
-      - run: ruff check src tests examples/legacy/*.py scripts
+      - run: ruff check src tests examples/*.py examples/legacy/*.py scripts
         working-directory: nexus-atom-geos
-      - run: ruff format --check src tests examples/legacy/*.py scripts
+      - run: ruff format --check src tests examples/*.py examples/legacy/*.py scripts
         working-directory: nexus-atom-geos
       - run: python -m pytest tests -q --cov=geos_agents --cov-fail-under=80
         working-directory: nexus-atom-geos
@@ -55,6 +55,11 @@ jobs:
           python examples/legacy/run_agents_demo.py
           python examples/legacy/run_agents_demo.py --with-specialists
           python examples/legacy/run_engineering_demo.py
+      - name: Run synthetic debug workflow
+        working-directory: nexus-atom-geos
+        run: |
+          python examples/debug_demo.py /tmp/atom-debug-example
+          atom run --system geos --config /tmp/atom-debug-example/debug.yaml --state /tmp/atom-debug-example/state 'Repair the synthetic bug'
       - name: Build shared libraries for isolated wheel check
         run: |
           python -m build nexus-atom-core

@@ -17,13 +17,13 @@ Start with the [small model-independent example](https://github.com/NexusATOM/ne
 | `geos.validate` | Compare baseline/candidate numerics and configured scientific diagnostics |
 | `geos.diagnose` | Persist configured numerical/scientific diagnostic results |
 
-`modernization_plan`/`gpu_port_plan`/`optimize_plan` build the full baseline/candidate sequence. `regression_plan` executes and compares baseline/candidate runs without performance stages; select `workflow: regression` in configuration. `debug_plan` now explicitly raises `NotImplementedError` because a failure-reproduction/repair workflow is not yet implemented.
+`modernization_plan`/`gpu_port_plan`/`optimize_plan` build the full baseline/candidate sequence. `regression_plan` executes and compares baseline/candidate runs without performance stages; select `workflow: regression` in configuration. `debug_plan` reproduces a specified failure, records diagnostics, applies a repair, and compares the repaired output against a trusted reference; select `workflow: debug` (see below).
 
 ## Site configuration fields
 
 | Field | Meaning |
 |---|---|
-| `workflow` | `modernization` (default) or `regression` |
+| `workflow` | `modernization` (default), `regression`, or `debug` |
 | `workspace` | YAML federation bindings; relative to the config file |
 | `repository` | Bound repository in which site commands run |
 | `backend` | `local` or `slurm` |
@@ -184,5 +184,60 @@ atom run --system geos --config regression.yaml --state .atom/regression \
 fields as modernization, with `workflow: regression`. The required evaluators
 are software, numerical and science, plus separately configured test/sanitizer
 gates. The baseline itself must satisfy the configured software checks. Diagnosing
-or repairing a failing baseline belongs to a separate debug workflow, which is
-still incomplete; a failed baseline must not be accepted as regression success.
+or repairing a failing baseline belongs to the debug workflow below; a failed
+baseline must not be accepted as regression success.
+
+
+## Reproduce and repair a failure
+
+Select `workflow: debug`, supply one prepared `proposal` or repair runtime
+(`runtime_argv`/`nooa_model` with explicit `targets`), and configure:
+
+```yaml
+debug:
+  reference_dataset: reference.json
+  reference_sha256: <64-character SHA-256 of the reference file>
+  expected_exit_code: 1
+  failure_signature: "known failure message"
+  signature_stream: stderr
+  protected_files:
+    - [MAPL, tests/reproducer.py]
+commands:
+  reproduce: [python, tests/reproducer.py]
+  build: [./build.sh]
+  run: [./run.sh]
+```
+
+Keep the existing workspace, science and tolerance settings. The reference must
+have the same fields, units, coordinates and experiment metadata as candidate
+output. Its bytes are verified and snapshotted before execution. Reference
+selection and scientific tolerances are operator decisions.
+
+The sequence is inspect → reproduce → diagnose → repair → build → configured
+software checks → run → reproduce → validate. Baseline reproduction must fail
+with the specified exit code and literal signature; candidate reproduction must
+succeed using the same command and resources. The baseline failure is retained
+as evidence, not treated as a passing program. Diagnostics record observations,
+not a proven root cause. Runtime proposals receive those observations plus prior
+attempt feedback. A prepared patch gets one attempt. No speedup target applies.
+
+Protected files are fingerprinted, checked around reproduction, and excluded
+from patches. Protect your reproducer and test harness; these controls are not a
+sandbox for arbitrary operator commands. The additional `geos.repair` gate and
+the software gate require reproduction/repair evidence, while numerical and
+science gates compare against the trusted reference (not failed baseline output).
+
+Run a complete synthetic example from this repository after installing the
+Controller and GEOS package:
+
+```bash
+python examples/debug_demo.py /tmp/atom-debug-example
+atom run --system geos --config /tmp/atom-debug-example/debug.yaml \
+  --state /tmp/atom-debug-example/state 'Repair the synthetic bug'
+```
+
+This fixes an intentionally wrong arithmetic result with a prepared patch, uses
+no provider, and retains the original source. It demonstrates orchestration,
+not real GEOS debugging or scientific validation. Inspect the recorded goal and
+experiment with the Controller commands in its usage guide; resuming a completed
+goal reuses the saved results.

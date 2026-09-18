@@ -1,8 +1,8 @@
 # Nexus ATOM GEOS Agent and Model Plugin
 
-The first ATOM model plugin and the flagship modernization workflow. It exposes `geos.inspect`, `build`, `test`, `sanitize`, `run`, `profile`, `benchmark`, `optimize`, `validate` and `diagnose` through Core capabilities. The shared controller never imports GEOS compilation logic.
+The first ATOM model plugin and the flagship modernization workflow. It exposes `geos.inspect`, `build`, `test`, `sanitize`, `run`, `profile`, `benchmark`, `optimize`, `repair`, `reproduce`, `validate` and `diagnose` through Core capabilities. The shared controller never imports GEOS compilation logic.
 
-The workflow inspects the repository federation, creates detached worktrees, builds/runs/benchmarks/profiles a baseline, applies a checked proposal, then builds/runs/benchmarks the candidate and evaluates software, numerical, science and performance evidence. Failed candidates remain rejected. Source commits, policies, job logs, generated fields, repeated timing samples, proposals and patches become sealed experiment evidence.
+The workflow inspects the repository federation, creates detached worktrees, builds/runs/benchmarks/profiles a baseline, applies a checked proposal, then builds/runs/benchmarks the candidate and evaluates software, numerical, science and performance evidence. Regression workflows omit performance stages. Debug workflows reproduce a specified failure and verify a repair against a trusted reference; see the [debugging example](docs/USAGE.md#reproduce-and-repair-a-failure). Failed candidates remain rejected. Source commits, policies, job logs, generated fields, repeated timing samples, proposals and patches become sealed experiment evidence.
 
 ```bash
 atom run --system geos --demo --state .atom/geos-demo --target speedup=1 \

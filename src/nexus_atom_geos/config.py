@@ -7,8 +7,24 @@ from nexus_atom_science import Tolerance, ValidationSuite
 from pydantic import Field, model_validator
 
 
+class DebugPolicy(Contract):
+    reference_dataset: Path
+    reference_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_exit_code: int = Field(ge=1, le=255)
+    failure_signature: str = Field(min_length=1, max_length=256)
+    signature_stream: Literal["stdout", "stderr"] = "stderr"
+    protected_files: tuple[tuple[str, str], ...] = ()
+
+    @model_validator(mode="after")
+    def signature_is_meaningful(self):
+        if not self.failure_signature.strip():
+            raise ValueError("Failure signature must contain non-whitespace characters")
+        return self
+
+
 class GEOSConfig(Contract):
-    workflow: Literal["modernization", "regression"] = "modernization"
+    workflow: Literal["modernization", "regression", "debug"] = "modernization"
+    debug: DebugPolicy | None = None
     workspace: Path
     repository: str
     backend: Literal["local", "slurm"] = "local"
@@ -46,10 +62,33 @@ class GEOSConfig(Contract):
             raise ValueError("Unknown phase override")
         if self.workflow == "regression" and (self.runtime_argv or self.nooa_model):
             raise ValueError("Regression accepts prepared proposals, not model-generated changes")
+        if self.workflow == "debug":
+            if self.debug is None or not self.commands.get("reproduce"):
+                raise ValueError(
+                    "Debugging requires reference/failure policy and a shared reproduce command"
+                )
+            if any("reproduce" in commands for commands in self.phase_commands.values()):
+                raise ValueError("Debug reproducer must be identical in both phases")
+            if self.phase_resources.get("baseline", self.resources) != self.phase_resources.get(
+                "candidate", self.resources
+            ):
+                raise ValueError("Debug reproducer requires matching phase resources")
+            if (
+                sum(bool(value) for value in (self.proposal, self.runtime_argv, self.nooa_model))
+                != 1
+            ):
+                raise ValueError(
+                    "Debugging requires exactly one prepared proposal or repair runtime"
+                )
+            if not self.proposal and not self.targets:
+                raise ValueError("Debug repair runtime requires explicit source targets")
+        elif self.debug is not None:
+            raise ValueError("Debug policy requires workflow: debug")
         required = (
             ("build", "run", "benchmark") if self.workflow == "modernization" else ("build", "run")
         )
-        for phase in ("baseline", "candidate"):
+        phases = ("candidate",) if self.workflow == "debug" else ("baseline", "candidate")
+        for phase in phases:
             commands = {**self.commands, **self.phase_commands.get(phase, {})}
             if any(not commands.get(op) for op in required):
                 raise ValueError(f"Configure {', '.join(required)} commands for both phases")
@@ -72,6 +111,12 @@ class GEOSConfig(Contract):
 
         config = cls.model_validate(yaml.safe_load(path.read_text()))
         values = {"workspace": (path.parent / config.workspace).resolve()}
+        if config.debug:
+            values["debug"] = config.debug.model_copy(
+                update={
+                    "reference_dataset": (path.parent / config.debug.reference_dataset).resolve()
+                }
+            )
         if config.proposal:
             values["proposal"] = (path.parent / config.proposal).resolve()
         return config.model_copy(update=values)
