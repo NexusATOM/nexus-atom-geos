@@ -250,6 +250,14 @@
       "title": "Software Checks",
       "type": "array"
     },
+    "plot_fields": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Plot Fields",
+      "type": "array"
+    },
     "phase_commands": {
       "additionalProperties": {
         "additionalProperties": {

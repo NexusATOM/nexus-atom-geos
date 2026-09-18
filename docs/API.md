@@ -17,6 +17,7 @@ class GEOSConfig(Contract):
     environment: Environment = Field(default_factory=Environment)
     commands: dict[str, tuple[str, ...]]
     software_checks: tuple[Literal['test', 'sanitize'], ...] = ()
+    plot_fields: tuple[str, ...] = ()
     phase_commands: dict[str, dict[str, tuple[str, ...]]] = Field(default_factory=dict)
     phase_resources: dict[str, ResourceRequest] = Field(default_factory=dict)
     benchmark_seconds_file: str | None = None

@@ -15,6 +15,7 @@ class GEOSConfig(Contract):
     environment: Environment = Field(default_factory=Environment)
     commands: dict[str, tuple[str, ...]]
     software_checks: tuple[Literal["test", "sanitize"], ...] = ()
+    plot_fields: tuple[str, ...] = ()
     phase_commands: dict[str, dict[str, tuple[str, ...]]] = Field(default_factory=dict)
     phase_resources: dict[str, ResourceRequest] = Field(default_factory=dict)
     benchmark_seconds_file: str | None = None
@@ -31,6 +32,10 @@ class GEOSConfig(Contract):
 
     @model_validator(mode="after")
     def configured(self):
+        if len(set(self.plot_fields)) != len(self.plot_fields) or any(
+            not name for name in self.plot_fields
+        ):
+            raise ValueError("Plot fields must be unique nonempty names")
         if len(set(self.software_checks)) != len(self.software_checks):
             raise ValueError("Duplicate software check")
         if set(self.phase_commands) - {"baseline", "candidate"} or set(self.phase_resources) - {

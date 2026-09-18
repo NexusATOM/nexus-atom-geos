@@ -16,3 +16,4 @@ Initial multi-repository Nexus ATOM implementation. See README for implemented c
 - Add configurable mandatory test and sanitizer stages for both phases, separate
   evaluator identities, and evidence requirements enforced by the software gate.
 - Export each phase's benchmark samples and timing scope to a sealed CSV artifact.
+- Add explicit plot field selection and automatic comparison artifacts during validation, including failed numerical/scientific comparisons.

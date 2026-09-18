@@ -131,3 +131,24 @@ seconds, and measurement scope. Warmups are excluded exactly as in the benchmark
 JSON. Both formats retain the same sample values and are sealed as artifacts.
 The controller's `_atom_report` files provide acceptance decisions and metrics;
 CSV exports alone do not imply that a candidate was accepted.
+
+## Automatic scientific comparison plots
+
+Install `nexus-atom-geos[plots]` and set `plot_fields` to a list of field names in
+GEOS configuration, for example `plot_fields: [synthetic_mass]` for the synthetic
+demo dataset. The default empty list disables automatic plotting. Missing
+Matplotlib is detected when creating a plugin with plots configured.
+
+The `geos.validate` capability compares the selected baseline/candidate fields
+and writes `evidence/plots/field-0000.png` (and subsequent numbered files), plus
+an `evidence/plots.json` manifest mapping field names to hashed plot artifacts.
+Controller includes these files in the sealed experiment snapshot. Plots are
+also retained when numerical/scientific checks fail; their existence cannot
+make a failed comparison acceptable.
+
+Inputs must have aligned units, shapes, dimension names, and coordinates and
+must be one- or two-dimensional. Select/slice higher-dimensional model output
+explicitly before providing it. Missing fields or incompatible data fail the
+task. Profiles use available coordinates; two-dimensional plots show grid
+indices, not geographic projections. The manifest preserves the original field
+names while filenames use safe ordinal identifiers.

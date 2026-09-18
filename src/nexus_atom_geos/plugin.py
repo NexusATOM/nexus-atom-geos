@@ -140,6 +140,11 @@ class GEOSPlugin(ModelPlugin):
     name = "geos"
 
     def __init__(self, config: GEOSConfig | None = None):
+        if config and config.plot_fields:
+            from importlib.util import find_spec
+
+            if find_spec("matplotlib") is None:
+                raise ValueError("Configured plot_fields require nexus-atom-geos[plots]")
         self.config = config
         self.scheduler = (
             SlurmScheduler() if config and config.backend == "slurm" else LocalScheduler()
@@ -383,6 +388,27 @@ class GEOSPlugin(ModelPlugin):
                         ).model_dump(mode="json")
                     )
                 outputs = {"evaluations": evaluations}
+                if operation == "validate" and self.config.plot_fields:
+                    from nexus_atom_science import generate_comparison
+
+                    baseline, candidate = [
+                        DatasetArtifact.model_validate_json(
+                            (evidence / f"{name}-fields.json").read_text()
+                        )
+                        for name in ("baseline", "candidate")
+                    ]
+                    plots = evidence / "plots"
+                    plots.mkdir(exist_ok=False)
+                    outputs["plots"] = {}
+                    for index, name in enumerate(self.config.plot_fields):
+                        path = plots / f"field-{index:04d}.png"
+                        generate_comparison(
+                            baseline.fields[name], candidate.fields[name], path, title=name
+                        )
+                        outputs["plots"][name] = Artifact.capture(
+                            path, directory, kind="plot"
+                        ).model_dump(mode="json")
+                    write_json(evidence / "plots.json", outputs["plots"])
                 write_json(evidence / f"{operation}.json", outputs)
                 if not all(e["passed"] for e in evaluations):
                     return TaskResult(
