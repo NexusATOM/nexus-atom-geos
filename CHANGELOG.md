@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0a2 — 2026-09-18
+
+- Compose six real NOOA agents using typed PredictStrategy methods.
+- Add bounded investigation, explanation, GPU planning and patch-proposal workflows.
+- Validate citations against repository-specific evidence and record delegation events.
+- Add CLI, offline synthetic example, and persistent JSON/JSONL run artifacts.
+- Test actual NOOA method dispatch with its scripted FakeLLMClient (no API keys).
+
 ## 0.1.0a1 — 2026-09-18
 
 - Establish typed GEOS tasks, repository bindings, evidence and result contracts.

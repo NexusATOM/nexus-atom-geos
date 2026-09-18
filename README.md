@@ -15,6 +15,13 @@ python -m pip install -e '.[dev]'
 pytest
 ```
 
-The initial foundation includes typed contracts, a GEOS repository catalog,
-mepo workspace import, and bounded repository context. Agent workflows and
-the command-line entry point follow in the next milestone.
+Run an offline GPU-port investigation with the small synthetic teaching fixture:
+
+```bash
+geos-agent gpu-port 'Port pressure_log to CUDA' \
+  --workspace examples/demo/workspace.yaml --offline
+```
+
+This writes a source inventory, validation plan and audit events to
+`.geos-agent/runs/<run-id>/`. The fixture is **not real GEOS source or a scientific
+benchmark**. See [usage](docs/USAGE.md) for a real workspace and model setup.

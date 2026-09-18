@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local GEOS agent evidence and site-specific checkout profiles
+.geos-agent/
+workspace.local.yaml
